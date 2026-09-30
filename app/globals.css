@@ -1,26 +1,449 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   WestPart — design tokens
+   Фірмові кольори взяті з існуючого бренду: #08356F (основний),
+   #042256 (глибокий), #3A79B8 (акцент). Решта рампи побудована навколо них.
+   ========================================================================== */
+
+@theme {
+  /* --- Типографіка --------------------------------------------------- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", monospace;
+
+  /* --- Бренд: синя рампа ---------------------------------------------
+     600 — основний CTA (кнопки), 900 — темні секції та футер,
+     950 — найглибший фон. Побудовано за макетом дизайнера.          */
+  --color-brand-50: #eff5ff;
+  --color-brand-100: #dce9fe;
+  --color-brand-200: #bfd8fd;
+  --color-brand-300: #92bcfb;
+  --color-brand-400: #5f97f7;
+  --color-brand-500: #3a76ee;
+  --color-brand-600: #1f5bd1;
+  --color-brand-700: #1a49a8;
+  --color-brand-800: #163d87;
+  --color-brand-900: #0e2a5e;
+  --color-brand-950: #081c42;
+
+  /* --- Змінні з макета Figma (blue-*) ---------------------------------
+     blue-700 — фон темних секцій, blue-50 — приглушений текст на них.
+     blue-600 — заливка карток (у макеті задана напряму, без змінної). */
+  --color-blue-25: #f3f8ff;
+  --color-blue-50: #c3d0e9;
+  --color-blue-300: #1457a9;
+  --color-blue-600: #173976;
+  --color-blue-700: #042256;
+
+  /* Нейтральні з макета — світлі секції (картки відгуків, рамки, підписи) */
+  --color-grey-100: #f5f5f5;
+  --color-grey-200: #dedede;
+  --color-grey-300: #b5b5b5;
+  --color-grey-600: #737373;
+  --color-grey-700: #4e4e4e;
+  --color-grey-800: #272727;
+  --color-black-900: #101010;
+  --color-star: #ffc107;
+
+  /* Наявність, ціна, акцентна кнопка «в один клік» */
+  --color-green-50: #dfede1;
+  --color-green-300: #007e17;
+  --color-yellow-300: #fece00;
+
+  /* --- Акцент: бурштиновий (CTA, промо) ------------------------------ */
+  --color-accent-50: #fff9ec;
+  --color-accent-100: #fff1d0;
+  --color-accent-200: #ffe0a0;
+  --color-accent-300: #ffc95f;
+  --color-accent-400: #ffb020;
+  --color-accent-500: #f59300;
+  --color-accent-600: #d97400;
+  --color-accent-700: #b45509;
+  --color-accent-800: #92430e;
+
+  /* --- Нейтральні (з холодним синім підтоном) ------------------------ */
+  --color-ink-50: #f7f9fc;
+  --color-ink-100: #eef2f7;
+  --color-ink-200: #dde5ee;
+  --color-ink-300: #c2cedd;
+  --color-ink-400: #8d9db3;
+  --color-ink-500: #64748b;
+  --color-ink-600: #4a5a70;
+  --color-ink-700: #34435a;
+  --color-ink-800: #1f2c40;
+  --color-ink-900: #0f1b2d;
+
+  /* --- Семантичні ----------------------------------------------------- */
+  --color-success-50: #ecfdf3;
+  --color-success-500: #16a34a;
+  --color-success-700: #15803d;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  /* --- Радіуси -------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+
+  /* --- Тіні: м'які, холодні ------------------------------------------ */
+  --shadow-xs: 0 1px 2px 0 rgb(8 53 111 / 0.05);
+  --shadow-sm:
+    0 1px 3px 0 rgb(8 53 111 / 0.08), 0 1px 2px -1px rgb(8 53 111 / 0.06);
+  --shadow-md:
+    0 4px 12px -2px rgb(8 53 111 / 0.1), 0 2px 6px -2px rgb(8 53 111 / 0.06);
+  --shadow-lg:
+    0 12px 28px -6px rgb(8 53 111 / 0.14), 0 4px 10px -4px rgb(8 53 111 / 0.08);
+  --shadow-xl: 0 24px 48px -12px rgb(8 53 111 / 0.2);
+
+  /* --- Анімації ------------------------------------------------------- */
+  --animate-marquee: marquee 40s linear infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ==========================================================================
+   Базові стилі
+   ========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Якоря не ховаються під липкою шапкою (64–72px + 48px навігації) */
+    scroll-padding-top: 8rem;
+    /* Місце під смугу зарезервоване завжди — сторінка не смикається,
+       коли з'являється скрол або блокується прокрутка мобільним меню */
+    scrollbar-gutter: stable;
+    /* Firefox — градієнтів не підтримує, тому суцільний фірмовий синій */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-600)
+      color-mix(in oklab, var(--color-brand-600) 10%, transparent);
+  }
+
+  /* --- Кастомна смуга прокрутки (Chromium, Safari) ------------------- */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Ледь помітна фірмова напрямна */
+  ::-webkit-scrollbar-track {
+    background-color: color-mix(
+      in oklab,
+      var(--color-brand-600) 8%,
+      transparent
+    );
+  }
+
+  /* Повзунок — градієнт фірмового синього, щоб не був пласким.
+     Прозора рамка + background-clip дають «повітря» навколо нього. */
+  ::-webkit-scrollbar-thumb {
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-brand-500),
+      var(--color-brand-700)
+    );
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-brand-600),
+      var(--color-brand-800)
+    );
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-brand-700),
+      var(--color-brand-900)
+    );
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-ink-900);
+    font-feature-settings: "cv11", "ss01";
+    font-variant-ligatures: contextual;
+  }
+
+  /* Артикули, ціни, коди — завжди моноширинні цифри */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-800);
+    color: var(--color-white);
+  }
+
+  /* Tailwind v4 у preflight ставить кнопкам cursor: default — повертаємо
+     звичну поведінку для всього, що клікається */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Плавне зникнення країв у стрічках логотипів / скролах */
+  .mask-fade-x {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 6%,
+      black 94%,
+      transparent
+    );
+  }
+
+  /* Слайдер виходить за межі Container до країв екрана — сусідні картки
+     визирають з обох боків, як у макеті. Внутрішній відступ дорівнює
+     відстані від краю екрана до контенту Container (max-w-1280 + px-4/6/8),
+     тому перший слайд усе одно стоїть рівно по контейнеру. */
+  .slider-bleed {
+    --slider-gutter: 1rem;
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    padding-inline: var(--slider-gutter);
+    scroll-padding-inline: var(--slider-gutter);
+  }
+  @media (width >= 40rem) {
+    .slider-bleed {
+      --slider-gutter: 1.5rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .slider-bleed {
+      --slider-gutter: 2rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .slider-bleed {
+      --slider-gutter: calc((100vw - 1280px) / 2 + 2rem);
+    }
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Тонша смуга для внутрішніх блоків: списків, випадайок, бічних панелей */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-400) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-brand-400),
+      var(--color-brand-600)
+    );
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-brand-500),
+      var(--color-brand-700)
+    );
+  }
+
+  /* Варіант для темних поверхонь (футер, темні панелі) */
+  .scrollbar-dark {
+    scrollbar-color: color-mix(in oklab, white 30%, transparent) transparent;
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, white 22%, transparent);
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, white 40%, transparent);
+  }
+}
+
+/* ==========================================================================
+   Текст статті
+   Приходить з бекенду готовим HTML, тому оформлюємо теги напряму —
+   класи на них навісити не можна.
+   ========================================================================== */
+
+.article-body {
+  color: var(--color-grey-700);
+  font-size: 17px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.article-body > * + * {
+  margin-top: 14px;
+}
+
+/* Перший абзац — вступ: трохи більший і темніший, щоб текст мав вхід */
+.article-body > p:first-of-type {
+  color: var(--color-grey-800);
+  font-size: 18px;
+}
+
+.article-body h2,
+.article-body h3,
+.article-body h4 {
+  color: var(--color-black-900);
+  font-weight: 600;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.article-body h2 {
+  margin-top: 2em;
+  font-size: 26px;
+}
+
+.article-body h3 {
+  margin-top: 1.75em;
+  font-size: 21px;
+}
+
+.article-body h4 {
+  margin-top: 1.5em;
+  font-size: 18px;
+}
+
+/* Перший заголовок не відбиваємо зверху — над ним уже є відступ секції */
+.article-body > :first-child {
+  margin-top: 0;
+}
+
+.article-body strong,
+.article-body b {
+  color: var(--color-black-900);
+  font-weight: 600;
+}
+
+.article-body a {
+  color: var(--color-blue-300);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-body a:hover {
+  opacity: 0.8;
+}
+
+.article-body ul,
+.article-body ol {
+  padding-left: 1.35em;
+}
+
+.article-body ul {
+  list-style: disc;
+}
+
+.article-body ol {
+  list-style: decimal;
+}
+
+.article-body li + li {
+  margin-top: 0.5em;
+}
+
+.article-body li::marker {
+  color: var(--color-blue-300);
+}
+
+.article-body blockquote {
+  border-left: 3px solid var(--color-blue-300);
+  border-radius: 0 12px 12px 0;
+  background-color: var(--color-blue-25);
+  padding: 1em 1.25em;
+  color: var(--color-black-900);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.article-body blockquote > * + * {
+  margin-top: 0.6em;
+}
+
+.article-body img {
+  height: auto;
+  max-width: 100%;
+  border-radius: 16px;
+}
+
+.article-body hr {
+  border: 0;
+  border-top: 1px solid var(--color-grey-200);
+  margin-block: 2em;
+}
+
+/* Широкі таблиці прокручуються всередині себе, а не ламають сторінку */
+.article-body table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.article-body th,
+.article-body td {
+  border: 1px solid var(--color-grey-200);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.article-body th {
+  background-color: var(--color-grey-100);
+  color: var(--color-black-900);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,628 @@
+import { backendUrl, gql, gqlRaw } from "@/lib/api/graphql";
+import { getApiAuth } from "@/lib/api/session";
+import type { ApiFieldError } from "@/lib/api/auth";
+
+/* --------------------------------------------------------- Статуси */
+
+/**
+ * Довідники статусів — це GenericScalar, тобто звичайний словник
+ * «код → назва». Доступні анонімно, тож кешуємо надовго.
+ */
+const STATUSES = /* GraphQL */ `
+  query OrderStatuses {
+    orderStatuses
+    orderItemStatuses
+  }
+`;
+
+export type StatusMap = Record<string, string>;
+
+export async function getOrderStatuses() {
+  try {
+    const data = await gql<{
+      orderStatuses: StatusMap | null;
+      orderItemStatuses: StatusMap | null;
+    }>(STATUSES, { revalidate: 60 * 60 * 24, tags: ["order-statuses"] });
+    return {
+      order: data.orderStatuses ?? {},
+      item: data.orderItemStatuses ?? {},
+    };
+  } catch {
+    return { order: {}, item: {} };
+  }
+}
+
+/**
+ * Тон плашки за змістом статусу, а не за номером: коди не впорядковані
+ * (12 «опрацьовується» логічно стоїть між 1 і 2).
+ */
+export type StatusTone = "neutral" | "progress" | "waiting" | "done" | "failed";
+
+const ORDER_TONES: Record<string, StatusTone> = {
+  "1": "neutral", // нове
+  "2": "progress", // підтверджено
+  "12": "progress", // опрацьовується
+  "5": "waiting", // очікує поставку
+  "6": "waiting", // очікує оплату
+  "11": "waiting", // відкладено
+  "8": "progress", // готове до відправлення
+  "9": "progress", // запаковано
+  "10": "progress", // відправлено
+  "3": "done", // завершено
+  "4": "failed", // скасовано
+};
+
+const ITEM_TONES: Record<string, StatusTone> = {
+  "1": "neutral",
+  "10": "progress",
+  "2": "done",
+  "5": "progress",
+  "4": "progress",
+  "11": "progress",
+  "12": "progress",
+  "13": "progress",
+  "8": "progress",
+  "6": "waiting",
+  "7": "failed",
+  "3": "failed",
+  "9": "failed",
+};
+
+export function orderTone(status: number | null): StatusTone {
+  return ORDER_TONES[String(status)] ?? "neutral";
+}
+
+export function itemTone(status: number | null): StatusTone {
+  return ITEM_TONES[String(status)] ?? "neutral";
+}
+
+/* ------------------------------------------------------ Замовлення */
+
+export type OrderListItem = {
+  id: string;
+  number: number | null;
+  created: string;
+  status: number | null;
+  total: number | null;
+  isPaid: boolean;
+  shipped: string | null;
+  deliveryDeclaration: string;
+  itemsCount: number;
+};
+
+type OrderAllResponse = {
+  orderAll: {
+    pagesCount: number | null;
+    totalCount: number | null;
+    totalSum: number | null;
+    completedCount: number | null;
+    canceledCount: number | null;
+    edges: {
+      id: string;
+      number: number | null;
+      created: string;
+      status: number | null;
+      total: number | null;
+      isPaid: boolean;
+      shipped: string | null;
+      deliveryDeclaration: string;
+      items: { totalCount: number | null } | null;
+    }[];
+  } | null;
+};
+
+const ORDER_LIST = /* GraphQL */ `
+  query Orders($page: Int!, $perPage: Int!, $statuses: [String]) {
+    orderAll(
+      page: $page
+      perPage: $perPage
+      statuses: $statuses
+      sort: "-created"
+    ) {
+      pagesCount
+      totalCount
+      totalSum
+      completedCount
+      canceledCount
+      edges {
+        id
+        number
+        created
+        status
+        total
+        isPaid
+        shipped
+        deliveryDeclaration
+        items {
+          totalCount
+        }
+      }
+    }
+  }
+`;
+
+export type OrdersPage = {
+  items: OrderListItem[];
+  pagesCount: number;
+  totalCount: number;
+  totalSum: number;
+  completedCount: number;
+  canceledCount: number;
+};
+
+const EMPTY_PAGE: OrdersPage = {
+  items: [],
+  pagesCount: 0,
+  totalCount: 0,
+  totalSum: 0,
+  completedCount: 0,
+  canceledCount: 0,
+};
+
+/**
+ * perPage без page бекенд мовчки ігнорує — передаємо завжди обидва.
+ */
+export async function getOrders(
+  page = 1,
+  perPage = 10,
+  statuses?: string[],
+): Promise<OrdersPage> {
+  const auth = await getApiAuth();
+  if (!auth) return EMPTY_PAGE;
+
+  try {
+    const data = await gql<OrderAllResponse>(ORDER_LIST, {
+      auth,
+      variables: {
+        page,
+        perPage,
+        ...(statuses?.length ? { statuses } : {}),
+      },
+    });
+
+    const conn = data.orderAll;
+    if (!conn) return EMPTY_PAGE;
+
+    return {
+      items: conn.edges.map((o) => ({
+        id: o.id,
+        number: o.number,
+        created: o.created,
+        status: o.status,
+        total: o.total,
+        isPaid: o.isPaid,
+        shipped: o.shipped,
+        deliveryDeclaration: o.deliveryDeclaration,
+        itemsCount: o.items?.totalCount ?? 0,
+      })),
+      pagesCount: conn.pagesCount ?? 0,
+      totalCount: conn.totalCount ?? 0,
+      totalSum: conn.totalSum ?? 0,
+      completedCount: conn.completedCount ?? 0,
+      canceledCount: conn.canceledCount ?? 0,
+    };
+  } catch {
+    return EMPTY_PAGE;
+  }
+}
+
+/* --------------------------------------------- Одне замовлення */
+
+export type OrderItem = {
+  id: string;
+  status: number | null;
+  count: number;
+  price: number | null;
+  total: number | null;
+  deliveryDays: number;
+  arrival: string | null;
+  comment: string;
+  canBeReturned: boolean;
+  hasReturn: boolean;
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    num: string;
+    brand: string | null;
+  } | null;
+};
+
+export type OrderDetails = {
+  id: string;
+  number: number | null;
+  created: string;
+  status: number | null;
+  total: number | null;
+  deliveryCost: string;
+  isPaid: boolean;
+  shipped: string | null;
+  deliveryDate: string | null;
+  deliveryInfo: string;
+  deliveryDeclaration: string;
+  deliveryMessage: string | null;
+  deliveryName: string | null;
+  payMethodName: string | null;
+  recipient: string;
+  city: string;
+  address: string;
+  phone: string;
+  canBeCancelled: boolean;
+  canBeReturned: boolean;
+  printUrl: string | null;
+  checkUrl: string | null;
+  comments: OrderComment[];
+  items: OrderItem[];
+};
+
+export type OrderComment = {
+  id: string;
+  text: string;
+  created: string;
+  /** Порожньо — значить, повідомлення писав сам клієнт */
+  managerName: string | null;
+};
+
+const ORDER_ONE = /* GraphQL */ `
+  query Order($id: ID!) {
+    order(id: $id) {
+      id
+      number
+      created
+      status
+      total
+      deliveryCost
+      isPaid
+      shipped
+      deliveryDate
+      deliveryInfo
+      deliveryDeclaration
+      deliveryMessage
+      delivery {
+        name
+      }
+      payMethod {
+        name
+      }
+      recipient
+      city
+      address
+      phone
+      canBeCancelled
+      canBeReturned
+      printUrl
+      checkUrl
+      comments {
+        edges {
+          id
+          text
+          created
+          manager {
+            fullName
+          }
+        }
+      }
+      items {
+        edges {
+          id
+          status
+          count
+          price
+          total
+          deliveryDays
+          arrival
+          comment
+          canBeReturned
+          hasReturn
+          product {
+            id
+            slug
+            name
+            num
+            manufacturer {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+type OrderOneResponse = {
+  order: {
+    id: string;
+    number: number | null;
+    created: string;
+    status: number | null;
+    total: number | null;
+    deliveryCost: string;
+    isPaid: boolean;
+    shipped: string | null;
+    deliveryDate: string | null;
+    deliveryInfo: string;
+    deliveryDeclaration: string;
+    deliveryMessage: string | null;
+    delivery: { name: string } | null;
+    payMethod: { name: string } | null;
+    recipient: string;
+    city: string;
+    address: string;
+    phone: string;
+    canBeCancelled: boolean | null;
+    canBeReturned: boolean | null;
+    printUrl: string | null;
+    checkUrl: string | null;
+    comments: {
+      edges: {
+        id: string;
+        text: string;
+        created: string;
+        manager: { fullName: string | null } | null;
+      }[];
+    } | null;
+    items: {
+      edges: {
+        id: string;
+        status: number | null;
+        count: number;
+        price: number | null;
+        total: number | null;
+        deliveryDays: number;
+        arrival: string | null;
+        comment: string;
+        canBeReturned: boolean | null;
+        hasReturn: boolean | null;
+        product: {
+          id: string;
+          slug: string;
+          name: string;
+          num: string;
+          manufacturer: { name: string } | null;
+        } | null;
+      }[];
+    } | null;
+  } | null;
+};
+
+export async function getOrder(id: string): Promise<OrderDetails | null> {
+  const auth = await getApiAuth();
+  if (!auth) return null;
+
+  try {
+    const data = await gql<OrderOneResponse>(ORDER_ONE, {
+      auth,
+      variables: { id },
+    });
+    const o = data.order;
+    if (!o) return null;
+
+    return {
+      id: o.id,
+      number: o.number,
+      created: o.created,
+      status: o.status,
+      total: o.total,
+      deliveryCost: o.deliveryCost,
+      isPaid: o.isPaid,
+      shipped: o.shipped,
+      deliveryDate: o.deliveryDate,
+      deliveryInfo: o.deliveryInfo,
+      deliveryDeclaration: o.deliveryDeclaration,
+      deliveryMessage: o.deliveryMessage,
+      deliveryName: o.delivery?.name ?? null,
+      payMethodName: o.payMethod?.name ?? null,
+      recipient: o.recipient,
+      city: o.city,
+      address: o.address,
+      phone: o.phone,
+      canBeCancelled: Boolean(o.canBeCancelled),
+      canBeReturned: Boolean(o.canBeReturned),
+      printUrl: backendUrl(o.printUrl),
+      checkUrl: backendUrl(o.checkUrl),
+      comments: (o.comments?.edges ?? []).map((c) => ({
+        id: c.id,
+        text: c.text,
+        created: c.created,
+        managerName: c.manager?.fullName ?? null,
+      })),
+      items: (o.items?.edges ?? []).map((i) => ({
+        id: i.id,
+        status: i.status,
+        count: i.count,
+        price: i.price,
+        total: i.total,
+        deliveryDays: i.deliveryDays,
+        arrival: i.arrival,
+        comment: i.comment,
+        canBeReturned: Boolean(i.canBeReturned),
+        hasReturn: Boolean(i.hasReturn),
+        product: i.product
+          ? {
+              id: i.product.id,
+              slug: i.product.slug,
+              name: i.product.name,
+              num: i.product.num,
+              brand: i.product.manufacturer?.name ?? null,
+            }
+          : null,
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------- Дії із замовленням */
+
+/**
+ * Без `items` бекенд скасовує замовлення цілком, зі списком — лише
+ * вказані позиції. Строк скасування обмежений полем cancelOrderDays
+ * у профілі, тому покладаємось на canBeCancelled з відповіді.
+ */
+export async function cancelOrder(order: string, items?: string[]) {
+  const auth = await getApiAuth();
+  return gqlRaw<{ cancelOrder: { errors: ApiFieldError[] | null } }>(
+    /* GraphQL */ `
+      mutation CancelOrder($order: String!, $items: [String!]) {
+        cancelOrder(order: $order, items: $items) {
+          errors {
+            field
+            messages
+          }
+        }
+      }
+    `,
+    { auth, variables: { order, ...(items?.length ? { items } : {}) } },
+  );
+}
+
+export async function addOrderComment(order: string, text: string) {
+  const auth = await getApiAuth();
+  return gqlRaw<{ addOrderComment: { errors: ApiFieldError[] | null } }>(
+    /* GraphQL */ `
+      mutation AddOrderComment($input: AddOrderCommentMutationInput!) {
+        addOrderComment(input: $input) {
+          errors {
+            field
+            messages
+          }
+        }
+      }
+    `,
+    { auth, variables: { input: { order, text } } },
+  );
+}
+
+/* --------------------------------------------------------- Повернення */
+
+export type ReturnItem = {
+  id: string;
+  count: number;
+  reason: number | null;
+  reaction: number | null;
+  description: string;
+  comment: string;
+  created: string;
+  dispatchInfo: string;
+  accountUrl: string | null;
+  product: { slug: string; id: string; name: string; num: string } | null;
+};
+
+const RETURNS = /* GraphQL */ `
+  query Returns($page: Int!, $perPage: Int!) {
+    returnsAll(page: $page, perPage: $perPage) {
+      totalCount
+      pagesCount
+      edges {
+        id
+        count
+        reason
+        reaction
+        description
+        comment
+        created
+        dispatchInfo
+        accountUrl
+        orderItem {
+          product {
+            id
+            slug
+            name
+            num
+          }
+        }
+      }
+    }
+  }
+`;
+
+export type ReturnsPage = {
+  items: ReturnItem[];
+  totalCount: number;
+  pagesCount: number;
+};
+
+export async function getReturns(page = 1, perPage = 10): Promise<ReturnsPage> {
+  const auth = await getApiAuth();
+  if (!auth) return { items: [], totalCount: 0, pagesCount: 0 };
+
+  try {
+    const data = await gql<{
+      returnsAll: {
+        totalCount: number | null;
+        pagesCount: number | null;
+        edges: (Omit<ReturnItem, "product"> & {
+          orderItem: {
+            product: {
+              id: string;
+              slug: string;
+              name: string;
+              num: string;
+            } | null;
+          } | null;
+        })[];
+      } | null;
+    }>(RETURNS, { auth, variables: { page, perPage } });
+
+    const conn = data.returnsAll;
+    if (!conn) return { items: [], totalCount: 0, pagesCount: 0 };
+
+    return {
+      items: conn.edges.map(({ orderItem, ...r }) => ({
+        ...r,
+        product: orderItem?.product ?? null,
+      })),
+      totalCount: conn.totalCount ?? 0,
+      pagesCount: conn.pagesCount ?? 0,
+    };
+  } catch {
+    return { items: [], totalCount: 0, pagesCount: 0 };
+  }
+}
+
+/** Довідники причин і рішень — відкриті анонімно, тому кешуємо на добу */
+export async function getReturnDictionaries() {
+  try {
+    const data = await gql<{
+      returnReasons: StatusMap | null;
+      returnReactions: StatusMap | null;
+    }>(
+      /* GraphQL */ `
+        query ReturnDictionaries {
+          returnReasons
+          returnReactions
+        }
+      `,
+      { revalidate: 60 * 60 * 24, tags: ["return-dictionaries"] },
+    );
+    return {
+      reasons: data.returnReasons ?? {},
+      reactions: data.returnReactions ?? {},
+    };
+  } catch {
+    return { reasons: {}, reactions: {} };
+  }
+}
+
+export async function createReturn(input: {
+  orderItem: string;
+  reason: string;
+  count: number;
+  description?: string;
+}) {
+  const auth = await getApiAuth();
+  return gqlRaw<{ returnOrderItem: { errors: ApiFieldError[] | null } }>(
+    /* GraphQL */ `
+      mutation ReturnOrderItem($input: ReturnOrderItemInput!) {
+        returnOrderItem(input: $input) {
+          errors {
+            field
+            messages
+          }
+        }
+      }
+    `,
+    { auth, variables: { input } },
+  );
+}
