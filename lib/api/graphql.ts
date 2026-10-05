@@ -7,8 +7,12 @@
  *    тож фронту не обов'язково жити на піддомені westpart.ua.
  */
 
-const ENDPOINT =
-  process.env.WESTPART_API_URL ?? "https://test.westpart.ua/api/graphql/";
+/* Django віддає 301 на адресу без слеша, а fetch, ідучи за редіректом,
+   губить тіло POST — бекенд відповідає «Must provide query». Тому слеш
+   дописуємо самі, щоб помилка в змінній середовища не ламала весь сайт. */
+const ENDPOINT = (
+  process.env.WESTPART_API_URL ?? "https://test.westpart.ua/api/graphql/"
+).replace(/\/?$/, "/");
 
 export type GraphQLErrorItem = {
   message: string;
