@@ -7,6 +7,9 @@ import { NextResponse } from "next/server";
  * з хостингу. Прибрати, щойно деплой запрацює.
  */
 export const dynamic = "force-dynamic";
+/* Регіон має збігатися з vercel.json: перевіряємо здогадку, що Cloudflare
+   ріже запити за географією — з Вашингтона (iad1) приходить 403 */
+export const preferredRegion = "fra1";
 
 export async function GET() {
   const endpoint = (
@@ -27,6 +30,7 @@ export async function GET() {
     return NextResponse.json({
       endpoint,
       envSet: Boolean(process.env.WESTPART_API_URL),
+      region: process.env.VERCEL_REGION ?? null,
       status: res.status,
       contentType: res.headers.get("content-type"),
       /* Cloudflare лишає свої сліди в заголовках — за ними видно,
