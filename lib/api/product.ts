@@ -11,6 +11,18 @@ export type ProductOffer = {
   canBuy: boolean;
 };
 
+export type Analogue = {
+  id: string;
+  slug: string;
+  num: string;
+  name: string;
+  brand: string | null;
+  image: string | null;
+  /** Код якості виробника: O, Q, PC, PJB, PJ, P, ZJ, Z */
+  quality: string | null;
+  offer: ProductOffer;
+};
+
 export type Product = {
   id: string;
   code: string | null;
@@ -29,6 +41,10 @@ export type Product = {
   offers: ProductOffer[];
   specs: { label: string; value: string }[];
   crosses: { num: string; brand: string | null }[];
+  /** Взаємозамінні товари, які реально можна купити */
+  analogues: Analogue[];
+  /** Код якості з характеристик — виносимо окремо для таблиці пропозицій */
+  quality: string | null;
   /** Чи товар уже в обраному. Для аноніма бекенд віддає false */
   isFavorite: boolean;
 };
@@ -66,6 +82,21 @@ type Response = {
       edges: {
         num: string | null;
         manufacturer: { name: string | null } | null;
+        crossProduct: {
+          id: string;
+          num: string | null;
+          name: string | null;
+          slug: string | null;
+          images: string[] | null;
+          manufacturer: { name: string | null } | null;
+          specs: {
+            edges: {
+              value: string | null;
+              spec: { name: string | null } | null;
+            }[];
+          } | null;
+          price: RawOffer | null;
+        } | null;
       }[];
     } | null;
   } | null;
@@ -122,6 +153,31 @@ const PRODUCT = /* GraphQL */ `
           manufacturer {
             name
           }
+          crossProduct {
+            id
+            num
+            name
+            slug
+            images
+            manufacturer {
+              name
+            }
+            specs {
+              edges {
+                value
+                spec {
+                  name
+                }
+              }
+            }
+            price {
+              priceOut
+              priceUser
+              count
+              canBuy
+              deliveryDaysHumanize
+            }
+          }
         }
       }
     }
@@ -131,6 +187,20 @@ const PRODUCT = /* GraphQL */ `
 /** Назви характеристик приходять із хвостовим \r і двокрапкою */
 function cleanLabel(name: string) {
   return name.replace(/\s+$/g, "").replace(/:$/, "").trim();
+}
+
+/** Код якості лежить серед звичайних характеристик, під назвою «Якість» */
+function qualityOf(
+  specs:
+    | { value: string | null; spec: { name: string | null } | null }[]
+    | undefined,
+) {
+  const hit = (specs ?? []).find((s) =>
+    cleanLabel(s.spec?.name ?? "")
+      .toLowerCase()
+      .startsWith("якість"),
+  );
+  return hit?.value?.trim() || null;
 }
 
 function toOffer(raw: RawOffer): ProductOffer {
@@ -180,6 +250,31 @@ export async function getProduct(id: string): Promise<Product | null> {
     })
     .map((c) => ({ num: c.num!, brand: c.manufacturer?.name ?? null }));
 
+  /* Серед кросів більшість — довідкові номери автовиробника (VAG, SKODA)
+     та OEM-таблиці: товару за ними немає й купити їх не можна. Аналогами
+     вважаємо лише ті, у яких бекенд віддав ціну. */
+  const analogueSeen = new Set<string>();
+  const analogues: Analogue[] = (p.cross?.edges ?? []).flatMap((c) => {
+    const cp = c.crossProduct;
+    const price = cp?.price;
+    if (!cp || !price || (price.priceUser ?? price.priceOut) === null)
+      return [];
+    if (analogueSeen.has(cp.id)) return [];
+    analogueSeen.add(cp.id);
+    return [
+      {
+        id: cp.id,
+        slug: cp.slug ?? "",
+        num: cp.num ?? "",
+        name: cp.name?.trim() || "",
+        brand: cp.manufacturer?.name ?? null,
+        image: cp.images?.[0] ?? null,
+        quality: qualityOf(cp.specs?.edges),
+        offer: toOffer(price),
+      },
+    ];
+  });
+
   return {
     id: p.id,
     code: p.code,
@@ -198,6 +293,8 @@ export async function getProduct(id: string): Promise<Product | null> {
     offers,
     specs,
     crosses,
+    analogues,
+    quality: qualityOf(p.specs?.edges),
   };
 }
 

@@ -30,11 +30,17 @@ const steps = [
   "Менеджер підбере варіанти й надішле ціни зі строками",
 ];
 
-export default async function CreateRequestPage() {
-  const [options, user] = await Promise.all([
+export default async function CreateRequestPage({
+  searchParams,
+}: PageProps<"/requests/create">) {
+  const [options, user, sp] = await Promise.all([
     getRequestFormOptions(),
     getCurrentUser(),
+    searchParams,
   ]);
+
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const initial = { vin: str(sp.vin), description: str(sp.part) };
 
   return (
     <>
@@ -141,7 +147,7 @@ export default async function CreateRequestPage() {
             </div>
           )}
 
-          {user && <RequestForm options={options} />}
+          {user && <RequestForm options={options} initial={initial} />}
         </Container>
       </section>
     </>

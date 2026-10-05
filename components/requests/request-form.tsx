@@ -41,7 +41,15 @@ function Field({
   );
 }
 
-export function RequestForm({ options }: { options: RequestFormOptions }) {
+export function RequestForm({
+  options,
+  initial,
+}: {
+  options: RequestFormOptions;
+  /* Підставляється з адреси: картка перевірки сумісності на сторінці
+     товару передає сюди VIN і сам товар, щоб не вводити їх двічі */
+  initial?: { vin?: string; description?: string };
+}) {
   const [state, action, pending] = useActionState<RequestFormState, FormData>(
     createRequestAction,
     {},
@@ -154,7 +162,7 @@ export function RequestForm({ options }: { options: RequestFormOptions }) {
           <input
             id="vin"
             name="vin"
-            defaultValue={v.vin ?? ""}
+            defaultValue={v.vin ?? initial?.vin ?? ""}
             placeholder="17 символів"
             className={field}
           />
@@ -207,7 +215,7 @@ export function RequestForm({ options }: { options: RequestFormOptions }) {
           id="description"
           name="description"
           rows={4}
-          defaultValue={v.description ?? ""}
+          defaultValue={v.description ?? initial?.description ?? ""}
           placeholder="Наприклад: передній бампер, у кольорі, з отворами під парктроніки"
           className="w-full rounded-[8px] border border-grey-300 bg-white px-4 py-3 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:border-blue-300 focus:outline-none"
         />
