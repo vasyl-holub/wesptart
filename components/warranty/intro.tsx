@@ -25,7 +25,10 @@ export function WarrantyIntro() {
           ]}
         />
 
-        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-14">
+        {/* Колонка з фактами ширша за звичні 420: тут значення довгі
+            («З відвантаження», «Висновок виробника») і у вужчій розкладці
+            ламаються по одному слову на рядок */}
+        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
           <div className="flex flex-col items-start gap-4">
             <span className="inline-flex h-8 items-center rounded-[8px] border border-blue-300 px-2.5 text-[14px] leading-[1.5] text-blue-300">
               Умови покупки
@@ -53,7 +56,7 @@ export function WarrantyIntro() {
                 key={f.label}
                 className="flex flex-col gap-1 rounded-[16px] border border-grey-200 bg-white p-5"
               >
-                <span className="text-[20px] font-semibold leading-[1.3] text-blue-300 lg:text-[24px]">
+                <span className="text-balance text-[20px] font-semibold leading-[1.3] text-blue-300 lg:text-[24px]">
                   {f.value}
                 </span>
                 <span className="text-[13px] leading-[1.45] text-grey-700">

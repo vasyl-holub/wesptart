@@ -1,17 +1,31 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
+import { cn } from "@/lib/cn";
 import { PhoneIcon, ViberBadge } from "@/components/ui/icons";
 import { site } from "@/lib/site";
 
-export function VinBanner() {
+export function VinBanner({ tight = false }: { tight?: boolean }) {
   return (
-    <section className="bg-white py-12">
+    /* Коли банер завершує сторінку, знизу потрібен такий самий просвіт,
+       як і згори. Згори він складається з відступу попередньої секції
+       (48 / 64) і власного pt-12, тобто 96 на мобільному і 112 з lg.
+       Варіант last: не чіпає головну, де після банера йдуть відгуки. */
+    <section
+      className={cn(
+        "bg-white pb-12 last:pb-24 lg:last:pb-28",
+        /* На сторінці товару банер іде одразу за картками. Ті 20px, що є
+           в макеті, задає нижній відступ секції карток, тож свого
+           верхнього банер тут не має взагалі */
+        tight ? "pt-0" : "pt-12",
+      )}
+    >
       <Container>
         {/* Градієнт з макета, точка зламу на 71.6%: на мобільному згори вниз,
-            з lg — зліва направо */}
-        <div className="flex flex-col gap-8 overflow-hidden rounded-[24px] bg-linear-to-b from-[#042256] via-[#167ed3] via-[71.635%] to-[#0a3d7c] px-5 pt-8 lg:h-70 lg:flex-row lg:items-center lg:justify-between lg:gap-0 lg:bg-linear-to-r lg:px-0 lg:pl-10 lg:pt-0">
-          <div className="flex flex-col gap-6 lg:w-[580px] lg:shrink-0">
+            з lg — зліва направо. Висоту не фіксуємо: її задає вміст лівої
+            колонки разом із власними відступами, а фото тягнеться під неї */}
+        <div className="flex flex-col gap-8 overflow-hidden rounded-[24px] bg-linear-to-b from-[#042256] via-[#167ed3] via-[71.635%] to-[#0a3d7c] px-5 pt-8 lg:flex-row lg:items-stretch lg:justify-between lg:gap-0 lg:bg-linear-to-r lg:px-0 lg:pl-10 lg:pt-0">
+          <div className="flex flex-col gap-6 lg:w-[580px] lg:shrink-0 lg:justify-center lg:py-10">
             <div className="flex flex-col gap-4">
               <h2 className="text-[24px] font-semibold leading-[1.5] text-white lg:text-[40px] lg:font-bold lg:leading-[54px]">
                 Не впевнені, що підходить?
@@ -55,8 +69,9 @@ export function VinBanner() {
             </div>
           </div>
 
-          {/* -mx-5 гасить бічні відступи картки: фото йде в край і впритул до низу */}
-          <div className="relative -mx-5 h-70 lg:mx-0 lg:w-[480px] lg:shrink-0">
+          {/* -mx-5 гасить бічні відступи картки: фото йде в край і впритул до низу.
+              З lg висоту не задаємо — self-stretch тягне його під вміст зліва */}
+          <div className="relative -mx-5 h-70 lg:mx-0 lg:h-auto lg:w-[480px] lg:shrink-0 lg:self-stretch">
             <Image
               src="/mock/cta-manager.png"
               alt="Менеджер WestPart на складі"

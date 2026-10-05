@@ -9,6 +9,12 @@ import { PartInfoCard } from "@/components/catalog/part-info-card";
 import { PartActions } from "@/components/catalog/part-actions";
 import { PriceLevel } from "@/components/catalog/price-level";
 import { PartReviews } from "@/components/catalog/part-reviews";
+import { ViewTracker } from "@/components/catalog/view-tracker";
+import { PartOffers } from "@/components/catalog/part-offers";
+import { PartCompat } from "@/components/catalog/part-compat";
+import { PartRecommended } from "@/components/catalog/part-recommended";
+import { VinBanner } from "@/components/home/vin-banner";
+import type { OfferRow } from "@/components/catalog/offers-table";
 import { getProductSeo } from "@/lib/api/seo";
 import { getProduct, productTitle } from "@/lib/api/product";
 
@@ -64,6 +70,45 @@ export default async function PartPage({
         ]
       : []),
   ];
+
+  /* Сумісність із авто окремим полем API не віддає: `simpleCars` у товару
+     не фільтрується (однакові 99 535 записів для будь-якого артикула), а
+     productCarSimpleAll(product:) завжди повертає нуль. Єдине робоче
+     джерело — характеристика «Модель». */
+  const fitsFor =
+    product.specs.find((s) => s.label.toLowerCase().startsWith("модель"))
+      ?.value ?? null;
+
+  /* Варіанти поставки — це той самий товар з різних складів: артикул,
+     бренд і якість у них спільні, різняться ціна, строк і залишок */
+  const variantRows: OfferRow[] = product.offers.map((o) => ({
+    key: o.id,
+    offerId: o.id,
+    brand: product.brand,
+    num: product.num,
+    name: product.name,
+    quality: product.quality,
+    deliveryDays: o.deliveryDays,
+    count: o.count,
+    price: o.price,
+    canBuy: o.canBuy,
+    image: product.images[0] ?? null,
+  }));
+
+  const analogueRows: OfferRow[] = product.analogues.map((a) => ({
+    key: a.id,
+    offerId: a.offer.id,
+    brand: a.brand,
+    num: a.num,
+    name: a.name,
+    quality: a.quality,
+    deliveryDays: a.offer.deliveryDays,
+    count: a.offer.count,
+    price: a.offer.price,
+    canBuy: a.offer.canBuy,
+    image: a.image,
+    href: `/part/${a.slug}/${a.id}`,
+  }));
 
   return (
     <>
@@ -144,11 +189,14 @@ export default async function PartPage({
               щоб ширину втрачали всі однаково, а не одна середня.
               1024–1279: галерея і купівля в рядок, опис під ними на всю ширину. */}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            <div className="lg:order-1">
+            <div id="gallery" className="scroll-mt-24 lg:order-1">
               <PartGallery photos={product.images} alt={title} />
             </div>
 
-            <div className="lg:order-3 lg:col-span-2 xl:order-2 xl:col-span-1">
+            <div
+              id="specs"
+              className="scroll-mt-24 lg:order-3 lg:col-span-2 xl:order-2 xl:col-span-1"
+            >
               <PartInfoCard specs={specs} />
             </div>
 
@@ -160,11 +208,21 @@ export default async function PartPage({
         </Container>
       </section>
 
+      <ViewTracker productId={product.id} />
+
+      <PartOffers variants={variantRows} analogues={analogueRows} />
+
+      <PartCompat article={product.num} fitsFor={fitsFor} />
+
+      <VinBanner tight />
+
       <PartReviews
         productPk={product.id}
         rating={product.rating}
         voteCount={product.voteCount}
       />
+
+      <PartRecommended excludeId={product.id} />
     </>
   );
 }

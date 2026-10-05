@@ -111,7 +111,9 @@ export default async function CarModelPage({
 
   return (
     <>
-      <section className="bg-blue-25 py-8 lg:py-12">
+      {/* Без синьої підкладки: на цьому кроці підбору користувач уже
+          в процесі, і кольорова шапка лише відсуває вибір року вниз */}
+      <section className="pt-8 lg:pt-12">
         <Container className="flex flex-col gap-4">
           <Breadcrumbs
             items={[
@@ -132,7 +134,7 @@ export default async function CarModelPage({
         </Container>
       </section>
 
-      <section className="py-12 lg:py-16">
+      <section className="pb-12 pt-8 lg:pb-16 lg:pt-10">
         <Container className="flex flex-col gap-8">
           {years.length > 0 && (
             <Choices
