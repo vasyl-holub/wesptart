@@ -74,11 +74,20 @@ export type RawResult<T> = {
   setCookie: string[];
 };
 
+/* Cloudflare перед бекендом відповідає запитам із хостингу перевіркою
+   «Just a moment» замість даних. Обхід робиться правилом на їхньому боці:
+   пропускати запити з домовленим заголовком. Поки змінних немає, нічого
+   не додаємо — локально й так усе працює. */
+const API_KEY = process.env.WESTPART_API_KEY;
+const API_KEY_HEADER = process.env.WESTPART_API_KEY_HEADER ?? "X-Front-Key";
+
 function buildHeaders(auth?: ApiAuth): HeadersInit {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
+
+  if (API_KEY) headers[API_KEY_HEADER] = API_KEY;
 
   const cookies: string[] = [];
   if (auth?.sessionid) cookies.push(`sessionid=${auth.sessionid}`);
