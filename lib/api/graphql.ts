@@ -140,6 +140,18 @@ export async function gqlRaw<T>(
     throw new GraphQLRequestError("Порожня відповідь від API", []);
   }
 
+  /* Коли резолвер падає, бекенд віддає 200 із помилкою в `errors`, але
+     `data` лишається обʼєктом, де всі поля null. Без цієї перевірки
+     мутація виглядала б успішною: виклик не кидає, а payload порожній,
+     тож перевірка `payload?.errors` нічого не знаходить. Саме так
+     «успішно опублікований» відгук нікуди не зберігався. */
+  if (json.errors?.length && typeof json.data === "object") {
+    const fields = Object.values(json.data as Record<string, unknown>);
+    if (fields.length > 0 && fields.every((v) => v === null)) {
+      throw new GraphQLRequestError(json.errors[0].message, json.errors);
+    }
+  }
+
   return { data: json.data, setCookie: readSetCookie(res) };
 }
 
