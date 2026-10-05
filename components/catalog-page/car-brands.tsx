@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isRemoteImage } from "@/lib/images";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import type { CarBrand } from "@/lib/api/catalog";
@@ -34,6 +35,7 @@ export function CatalogCarBrands({ items }: { items: CarBrand[] }) {
                       width={48}
                       height={48}
                       className="size-12 object-contain"
+                      unoptimized={isRemoteImage(b.logo)}
                     />
                   ) : null}
                 </span>

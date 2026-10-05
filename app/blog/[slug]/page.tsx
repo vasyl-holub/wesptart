@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { isRemoteImage } from "@/lib/images";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { mediaUrl } from "@/lib/api/graphql";
@@ -111,6 +112,7 @@ export default async function ArticlePage({
                 priority
                 sizes="(min-width: 1024px) 920px, 100vw"
                 className="mt-8 h-auto w-full rounded-[20px] bg-grey-100"
+                unoptimized={isRemoteImage(cover)}
               />
             )}
 

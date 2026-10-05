@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { isRemoteImage } from "@/lib/images";
 import { PartImage } from "@/components/catalog/part-image";
 
 /**
@@ -56,6 +57,7 @@ export function ProductPhoto({
       height={height}
       sizes={sizes}
       className={className}
+      unoptimized={isRemoteImage(src)}
       /* Наступне джерело; коли список закінчиться — спрацює гілка вище */
       onError={() => setIndex((i) => i + 1)}
     />

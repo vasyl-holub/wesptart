@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { isRemoteImage } from "@/lib/images";
 import { YoutubeMark } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
@@ -31,6 +32,7 @@ export function PartGallery({
           sizes="(min-width: 1280px) 400px, (min-width: 1024px) 50vw, 100vw"
           className="object-cover"
           priority
+          unoptimized={isRemoteImage(thumbs[active])}
         />
       </div>
 
@@ -60,6 +62,7 @@ export function PartGallery({
                 fill
                 sizes="80px"
                 className="object-cover"
+                unoptimized={isRemoteImage(src)}
               />
               {isVideo(i) && (
                 <YoutubeMark className="absolute left-1/2 top-1/2 w-[35px] -translate-x-1/2 -translate-y-1/2" />
