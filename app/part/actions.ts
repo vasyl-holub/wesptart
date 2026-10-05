@@ -1,9 +1,9 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { addProductReview } from "@/lib/api/reviews";
+import { addProductReview, voteForProduct } from "@/lib/api/reviews";
+import { recordProductView } from "@/lib/api/history";
 import { getCurrentUser } from "@/lib/api/auth";
-import { GraphQLRequestError } from "@/lib/api/graphql";
 
 export type ReviewFormState = {
   formError?: string;
@@ -20,6 +20,7 @@ export async function addReviewAction(
 ): Promise<ReviewFormState> {
   const productPk = String(formData.get("productPk") ?? "");
   const text = String(formData.get("text") ?? "").trim();
+  const stars = Number(formData.get("stars"));
 
   if (!productPk) return { formError: "Не вказано товар" };
 
@@ -49,11 +50,14 @@ export async function addReviewAction(
       };
     }
   } catch (error) {
+    /* Сюди потрапляють лише збої резолвера: перевірки бекенда приходять
+       полем errors і оброблені вище. Повідомлення звідти — це пітонівський
+       трейс, показувати його покупцю немає сенсу. */
+    console.error("addComment:", error);
     return {
       formError:
-        error instanceof GraphQLRequestError
-          ? error.message
-          : "Не вдалося надіслати відгук. Спробуйте ще раз.",
+        "Не вдалося опублікувати відгук — це збій на нашому боці. " +
+        "Ми вже знаємо про нього, спробуйте пізніше.",
       values: { text },
     };
   }
@@ -61,6 +65,28 @@ export async function addReviewAction(
   /* updateTag, а не revalidateTag: автор має одразу побачити свій відгук,
      а не застарілий список. У Next 16 revalidateTag лише позначає теґ
      несвіжим і віддає старі дані, поки підвантажаться нові. */
+  /* Оцінка йде окремою мутацією: addComment її не приймає. Якщо вона
+     не пройде, відгук усе одно опубліковано — не валимо через це форму */
+  try {
+    await voteForProduct(productPk, stars);
+  } catch {
+    /* статистика оновиться наступного разу */
+  }
+
   updateTag(`reviews:${productPk}`);
   return { ok: true };
+}
+
+/**
+ * Відмічаємо перегляд товару. Викликається з клієнта після монтування,
+ * а не під час рендера сторінки: інакше запис створювався б і на
+ * префетч посилання, і на обхід ботами.
+ */
+export async function recordViewAction(productId: string) {
+  if (!productId) return;
+  try {
+    await recordProductView(productId);
+  } catch {
+    /* Історія переглядів не варта того, щоб через неї падала сторінка */
+  }
 }

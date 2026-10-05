@@ -1,6 +1,11 @@
 import { gql, gqlRaw } from "@/lib/api/graphql";
 import { getApiAuth } from "@/lib/api/session";
 import type { ApiFieldError } from "@/lib/api/auth";
+import type { Review, ReviewDistribution } from "@/lib/reviews-format";
+import { toStars } from "@/lib/reviews-format";
+
+export type { Review } from "@/lib/reviews-format";
+export { toStars } from "@/lib/reviews-format";
 
 /**
  * Відгуки живуть у спільній таблиці коментарів, прив'язаній через
@@ -38,15 +43,6 @@ async function getProductContentTypeId(): Promise<string | null> {
   }
 }
 
-export type Review = {
-  id: string;
-  author: string;
-  text: string;
-  /** Оцінка за десятибальною шкалою; null — відгук без оцінки */
-  vote: number | null;
-  created: string;
-};
-
 const REVIEWS = /* GraphQL */ `
   query ProductReviews($objectId: ID, $contentType: ID) {
     commentAll(
@@ -55,7 +51,7 @@ const REVIEWS = /* GraphQL */ `
       isDeleted: false
       orderBy: "-created"
       page: 1
-      perPage: 50
+      perPage: 100
     ) {
       totalCount
       edges {
@@ -69,9 +65,25 @@ const REVIEWS = /* GraphQL */ `
   }
 `;
 
-export async function getProductReviews(productPk: string): Promise<Review[]> {
+export type ReviewsData = {
+  items: Review[];
+  /** Скільки оцінок припало на кожну зірку, від 1 до 5 */
+  distribution: ReviewDistribution;
+  /** Усього оцінок, враховуючи ті, що без тексту */
+  votes: number;
+};
+
+const EMPTY_REVIEWS: ReviewsData = {
+  items: [],
+  distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  votes: 0,
+};
+
+export async function getProductReviews(
+  productPk: string,
+): Promise<ReviewsData> {
   const contentType = await getProductContentTypeId();
-  if (!contentType) return [];
+  if (!contentType) return EMPTY_REVIEWS;
 
   try {
     const data = await gql<{
@@ -94,10 +106,26 @@ export async function getProductReviews(productPk: string): Promise<Review[]> {
       tags: ["reviews", `reviews:${productPk}`],
     });
 
-    return (
-      (data.commentAll?.edges ?? [])
-        /* Більшість записів — самі лише оцінки без тексту: вони вже
-         враховані в зірочках біля назви, окремо показувати нічого */
+    const all = data.commentAll?.edges ?? [];
+
+    /* Більшість записів — самі лише оцінки без тексту. У список вони не
+       йдуть, але саме з них складається розподіл по зірках. */
+    const distribution: ReviewDistribution = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+    let votes = 0;
+    for (const c of all) {
+      if (typeof c.vote !== "number") continue;
+      votes += 1;
+      distribution[toStars(c.vote) as 1 | 2 | 3 | 4 | 5] += 1;
+    }
+
+    return {
+      items: all
         .filter((c) => c.text?.trim())
         .map((c) => ({
           id: c.id,
@@ -105,10 +133,12 @@ export async function getProductReviews(productPk: string): Promise<Review[]> {
           text: c.text!.trim(),
           vote: c.vote,
           created: c.created,
-        }))
-    );
+        })),
+      distribution,
+      votes,
+    };
   } catch {
-    return [];
+    return EMPTY_REVIEWS;
   }
 }
 
@@ -146,6 +176,35 @@ export async function addProductReview(input: {
           name: input.name,
           text: input.text,
         },
+      },
+    },
+  );
+}
+
+/**
+ * Оцінка зірками. Шкала бекенда десятибальна, тому множимо на два:
+ * без цього наш же розподіл по зірках ніколи б не поповнювався,
+ * бо addComment оцінку не приймає.
+ */
+export async function voteForProduct(productPk: string, stars: number) {
+  const auth = await getApiAuth();
+  const contentTypeId = await getProductContentTypeId();
+  if (!contentTypeId) return;
+
+  return gqlRaw<{ vote: { ok: boolean | null } }>(
+    /* GraphQL */ `
+      mutation VoteProduct($contentTypeId: ID, $objectId: ID, $vote: Float) {
+        vote(contentTypeId: $contentTypeId, objectId: $objectId, vote: $vote) {
+          ok
+        }
+      }
+    `,
+    {
+      auth,
+      variables: {
+        contentTypeId,
+        objectId: globalId("ProductNode", productPk),
+        vote: Math.min(10, Math.max(2, Math.round(stars) * 2)),
       },
     },
   );
