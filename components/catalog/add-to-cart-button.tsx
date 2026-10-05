@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { addToCartAction } from "@/app/cart/actions";
+import { setCartCount } from "@/lib/cart-count";
 
 /** Кнопка в картці списку. Без ідентифікатора пропозиції купити нічого */
 export function AddToCartButton({
@@ -38,6 +39,7 @@ export function AddToCartButton({
       onClick={() =>
         startTransition(async () => {
           const res = await addToCartAction(offerId, 1);
+          if (!res.error && res.count !== undefined) setCartCount(res.count);
           setState(res.error ? "error" : "added");
           setTimeout(() => setState("idle"), 2500);
         })

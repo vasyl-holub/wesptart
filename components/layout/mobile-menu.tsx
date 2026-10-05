@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { CartBadge } from "@/components/layout/cart-badge";
 import { mainNav } from "@/lib/site";
 import {
   CartIcon,
@@ -126,9 +127,10 @@ export function MobileMenu() {
                   href="/cart"
                   onClick={close}
                   aria-label="Кошик"
-                  className={outline}
+                  className={`${outline} relative`}
                 >
                   <CartIcon className="size-6" />
+                  <CartBadge />
                 </Link>
                 <Link
                   href="/login"

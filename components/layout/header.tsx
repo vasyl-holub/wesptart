@@ -6,6 +6,7 @@ import { CartIcon, ChevronDownIcon, UserIcon } from "@/components/ui/icons";
 import { Contacts } from "@/components/layout/contacts";
 import { HeaderSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
+import { CartBadge } from "@/components/layout/cart-badge";
 
 /** Кругла кнопка-дія: біла з рамкою, як у макеті */
 const action =
@@ -89,8 +90,14 @@ export function Header() {
               <div className="hidden items-center gap-2 lg:flex">
                 <HeaderSearch />
 
-                <Link href="/cart" aria-label="Кошик" className={action}>
+                {/* relative — щоб лічильник позиціонувався від кнопки */}
+                <Link
+                  href="/cart"
+                  aria-label="Кошик"
+                  className={`${action} relative`}
+                >
                   <CartIcon className="size-6" />
+                  <CartBadge />
                 </Link>
                 <Link href="/login" aria-label="B2B-кабінет" className={action}>
                   <UserIcon className="size-6" />

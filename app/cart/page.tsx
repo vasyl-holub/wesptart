@@ -6,6 +6,7 @@ import { CartLine } from "@/components/cart/cart-line";
 import { CartSummary } from "@/components/cart/cart-summary";
 import { EmptyCart } from "@/components/cart/empty-cart";
 import { ClearCartButton } from "@/components/cart/clear-cart-button";
+import { CartCountSync } from "@/components/cart/cart-count-sync";
 import { Promo } from "@/components/home/promo";
 import { TruckIcon } from "@/components/ui/icons";
 import {
@@ -30,6 +31,9 @@ export default async function CartPage() {
 
   return (
     <>
+      {/* Приводить значок у шапці до того, що насправді в кошику */}
+      <CartCountSync count={cart.items.length} />
+
       <Container className="py-8 lg:py-12">
         <Breadcrumbs
           items={[{ label: "Головна", href: "/" }, { label: "Кошик" }]}

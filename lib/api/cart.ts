@@ -255,3 +255,31 @@ export async function getOrderOptions(): Promise<{
     return { deliveries: [], payMethods: [] };
   }
 }
+
+const CART_COUNT = /* GraphQL */ `
+  query CartCount {
+    cartAll {
+      edges {
+        totalCount
+        existActive
+      }
+    }
+  }
+`;
+
+/**
+ * Лише кількість позицій для значка в шапці. Окремий легкий запит,
+ * щоб не тягнути весь кошик із товарами й цінами заради одного числа.
+ */
+export async function getCartCount(): Promise<number> {
+  const auth = await getApiAuth();
+  try {
+    const data = await gql<{
+      cartAll: { edges: { totalCount: number | null; existActive: boolean }[] };
+    }>(CART_COUNT, { auth });
+    const cart = data.cartAll.edges.find((c) => c.existActive);
+    return cart?.totalCount ?? 0;
+  } catch {
+    return 0;
+  }
+}

@@ -5,6 +5,7 @@ import {
   addCartItem,
   deleteCartItems,
   getCart,
+  getCartCount,
   setCartItemCount,
 } from "@/lib/api/cart";
 
@@ -25,7 +26,14 @@ export async function addToCartAction(itemId: string, count = 1) {
   }
 
   revalidatePath("/cart");
-  return {};
+  /* Повертаємо нову кількість, щоб значок у шапці оновився без
+     додаткового запиту з клієнта */
+  return { count: await getCartCount() };
+}
+
+/** Для значка в шапці: він питає кількість сам після монтування */
+export async function cartCountAction() {
+  return getCartCount();
 }
 
 export async function changeCountAction(cartItemId: string, count: number) {
@@ -38,7 +46,7 @@ export async function changeCountAction(cartItemId: string, count: number) {
   }
 
   revalidatePath("/cart");
-  return {};
+  return { count: await getCartCount() };
 }
 
 export async function removeItemAction(cartItemId: string) {
@@ -49,7 +57,7 @@ export async function removeItemAction(cartItemId: string) {
   }
 
   revalidatePath("/cart");
-  return {};
+  return { count: await getCartCount() };
 }
 
 export async function clearCartAction() {
@@ -63,5 +71,7 @@ export async function clearCartAction() {
   }
 
   revalidatePath("/cart");
-  return {};
+  /* Після очищення кількість завжди нуль, але беремо її з сервера:
+     раптом частина позицій не видалилась */
+  return { count: await getCartCount() };
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { clearCartAction } from "@/app/cart/actions";
+import { setCartCount } from "@/lib/cart-count";
 
 export function ClearCartButton() {
   /* Підтвердження на місці, а не браузерний confirm: очищення кошика
@@ -19,7 +20,8 @@ export function ClearCartButton() {
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
-              await clearCartAction();
+              const res = await clearCartAction();
+              if (res.count !== undefined) setCartCount(res.count);
               setAsking(false);
             })
           }

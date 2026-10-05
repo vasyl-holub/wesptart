@@ -8,6 +8,7 @@ import { ProductPhoto } from "@/components/catalog/product-photo";
 import { formatMoney } from "@/lib/cn";
 import { deliveryLabel, type CartItem } from "@/lib/cart-format";
 import { changeCountAction, removeItemAction } from "@/app/cart/actions";
+import { setCartCount } from "@/lib/cart-count";
 
 /** Назва рядком: деталь, бренд, артикул — як у картці товару */
 function lineTitle(item: CartItem) {
@@ -35,6 +36,8 @@ export function CartLine({ item }: { item: CartItem }) {
       if (res.error) {
         setError(res.error);
         setCount(item.count);
+      } else if (res.count !== undefined) {
+        setCartCount(res.count);
       }
     });
   };
@@ -44,6 +47,7 @@ export function CartLine({ item }: { item: CartItem }) {
     startTransition(async () => {
       const res = await removeItemAction(item.id);
       if (res.error) setError(res.error);
+      else if (res.count !== undefined) setCartCount(res.count);
     });
   };
 

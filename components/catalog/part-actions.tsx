@@ -16,6 +16,7 @@ import { formatMoney } from "@/lib/cn";
 import { site } from "@/lib/site";
 import type { Product } from "@/lib/api/product";
 import { addToCartAction } from "@/app/cart/actions";
+import { setCartCount } from "@/lib/cart-count";
 
 const btn =
   "flex h-12 w-full items-center justify-center gap-1.5 rounded-[8px] px-5 text-[16px] font-semibold leading-[1.5] transition-colors disabled:opacity-60";
@@ -40,6 +41,7 @@ export function PartActions({ product }: { product: Product }) {
     setState("idle");
     startTransition(async () => {
       const res = await addToCartAction(offer.id, count);
+      if (!res.error && res.count !== undefined) setCartCount(res.count);
       setState(res.error ? "error" : "added");
     });
   };
