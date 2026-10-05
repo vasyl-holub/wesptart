@@ -7,6 +7,13 @@ import { CatalogSuppliers } from "@/components/catalog-page/suppliers";
 import { VinBanner } from "@/components/home/vin-banner";
 import { getCarBrands, getCatalogCategories } from "@/lib/api/catalog";
 
+/* Збірка Vercel виконується у Вашингтоні, а Cloudflare перед бекендом
+   звідти не пропускає запити — тому одразу після деплою каталог
+   прегенерується порожнім. Невеликий інтервал дає сторінці самій
+   відновитися за кілька хвилин: ревалідація вже йде з Франкфурта.
+   Коли бекенд відкриє доступ для збірки, можна повернути годину. */
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "brands" */
   const meta = await cmsMetadata("brands", {
