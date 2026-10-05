@@ -11,16 +11,19 @@ export { ExternalLinkIcon } from "./external-link";
 export { SearchIcon, TargetArrowIcon } from "./hero";
 export { CartIcon, UserIcon, ChevronDownIcon, BoxIcon } from "./header";
 export {
-  StarFilledIcon,
-  HomeIcon,
-  ChevronRightIcon,
-  HeartIcon,
-  ShareIcon,
-  CircleCheckIcon,
-  BoltIcon,
-  HeadsetIcon,
-  CarIcon,
   BellIcon,
+  BoltIcon,
+  CameraIcon,
+  CarIcon,
+  ChevronRightIcon,
+  CircleCheckIcon,
+  HeadsetIcon,
+  HeartIcon,
+  HomeIcon,
+  InfoCircleIcon,
+  LogoutIcon,
+  ShareIcon,
+  StarFilledIcon,
   YoutubeMark,
 } from "./product";
 export {
