@@ -137,6 +137,13 @@ export async function gqlRaw<T>(
   try {
     json = JSON.parse(text) as { data?: T; errors?: GraphQLErrorItem[] };
   } catch {
+    /* У логах сервера видно, що саме прийшло: сторінка 404 від Django
+       означає неправильну адресу в WESTPART_API_URL, а перевірка
+       Cloudflare — що бекенд не пускає запити з хостингу */
+    console.error(
+      `[graphql] не JSON з ${ENDPOINT} (HTTP ${res.status}):`,
+      text.slice(0, 200),
+    );
     throw new GraphQLRequestError(
       `API повернув не JSON (HTTP ${res.status}). Перші символи: ` +
         text.slice(0, 80).replace(/\s+/g, " "),
