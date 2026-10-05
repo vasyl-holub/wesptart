@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { logoutAction } from "@/app/login/actions";
 import {
   BoxIcon,
   CarIcon,
   CartIcon,
+  ClockIcon,
   HeartIcon,
   HomeIcon,
   TruckIcon,
+  LogoutIcon,
   UserIcon,
 } from "@/components/ui/icons";
 
@@ -20,6 +23,7 @@ const items = [
   { href: "/account/returns", label: "Повернення", icon: TruckIcon },
   { href: "/account/garage", label: "Гараж", icon: CarIcon },
   { href: "/account/favorites", label: "Обране", icon: HeartIcon },
+  { href: "/account/history", label: "Перегляди", icon: ClockIcon },
   { href: "/account/profile", label: "Профіль", icon: UserIcon },
 ];
 
@@ -57,6 +61,20 @@ export function AccountNav() {
             </li>
           );
         })}
+
+        {/* Вихід живе в тому самому списку, тому однаково поводиться
+            і в боковій колонці, і в мобільній стрічці */}
+        <li className="lg:mt-2 lg:border-t lg:border-grey-200 lg:pt-2">
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="flex h-11 w-full items-center gap-2.5 whitespace-nowrap rounded-[8px] px-4 text-[15px] leading-[1.5] text-grey-700 transition-colors hover:bg-danger-50 hover:text-danger-700 lg:h-12 lg:px-5 lg:text-[16px]"
+            >
+              <LogoutIcon className="size-5 shrink-0" />
+              Вийти
+            </button>
+          </form>
+        </li>
       </ul>
     </nav>
   );
