@@ -6,6 +6,12 @@ import { FeedbackForm } from "@/components/feedback/feedback-form";
 import { getSiteKey } from "@/lib/api/auth";
 import { site } from "@/lib/site";
 
+/* Сторінку не прегенеруємо: їй потрібен свіжий ключ перевірки «я не робот»,
+   а статична версія зафіксувала б той, що був на момент збірки — або
+   порожній, якщо API тоді був недоступний. Сусідні сторінки з капчею
+   (вхід, реєстрація, відновлення пароля) і так динамічні. */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Залишити відгук",
   description:

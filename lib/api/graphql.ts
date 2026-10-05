@@ -125,10 +125,20 @@ export async function gqlRaw<T>(
     );
   }
 
-  const json = (await res.json()) as {
-    data?: T;
-    errors?: GraphQLErrorItem[];
-  };
+  /* Бекенд за певних умов віддає HTML — сторінку помилки або перевірку
+     Cloudflare. Тоді res.json() кидає SyntaxError, з якого неможливо
+     зрозуміти, що сталося: саме так падала збірка на /feedback. */
+  const text = await res.text();
+  let json: { data?: T; errors?: GraphQLErrorItem[] };
+  try {
+    json = JSON.parse(text) as { data?: T; errors?: GraphQLErrorItem[] };
+  } catch {
+    throw new GraphQLRequestError(
+      `API повернув не JSON (HTTP ${res.status}). Перші символи: ` +
+        text.slice(0, 80).replace(/\s+/g, " "),
+      [],
+    );
+  }
 
   /* Часткові дані з помилками теж можливі — але якщо data порожня,
      працювати нема з чим */

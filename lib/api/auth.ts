@@ -194,15 +194,21 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
  * вантажити довідниками реєстрації заради одного поля.
  */
 export async function getSiteKey() {
-  const data = await gql<{ siteKey: string }>(
-    /* GraphQL */ `
-      query SiteKey {
-        siteKey
-      }
-    `,
-    { revalidate: 60 * 60 * 24, tags: ["site-key"] },
-  );
-  return data.siteKey;
+  try {
+    const data = await gql<{ siteKey: string }>(
+      /* GraphQL */ `
+        query SiteKey {
+          siteKey
+        }
+      `,
+      { revalidate: 60 * 60 * 24, tags: ["site-key"] },
+    );
+    return data.siteKey ?? "";
+  } catch {
+    /* Недоступний API не повинен валити збірку. Порожній ключ показує
+       в формі повідомлення про недоступну перевірку, а не білу сторінку */
+    return "";
+  }
 }
 
 type ResetPayload = { errors: ApiFieldError[] | null };
