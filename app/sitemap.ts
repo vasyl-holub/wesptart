@@ -20,6 +20,7 @@ const staticPages: {
   { path: "/about", priority: 0.6, changeFrequency: "monthly" },
   { path: "/contacts", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
+  { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
   { path: "/promo", priority: 0.5, changeFrequency: "weekly" },
 ];
 

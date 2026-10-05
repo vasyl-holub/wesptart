@@ -81,6 +81,7 @@ export const footerNav: { title: string; items: NavLink[] }[] = [
       { label: "Прайс-лист", href: "/price-list" },
       { label: "Крос-номери", href: "/cross" },
       { label: "Співпраця", href: "/cooperation" },
+      { label: "Питання та відповіді", href: "/faq" },
     ],
   },
   {
