@@ -16,27 +16,27 @@ const channels = [
     href: site.phoneHref,
     label: "Зателефонувати",
     note: site.phone,
-    icon: <PhoneIcon className="size-6 shrink-0 text-blue-300" />,
+    icon: <PhoneIcon className="size-5 shrink-0 text-blue-300" />,
   },
   {
     href: site.viber,
     label: "Viber",
     note: site.replyTime,
-    icon: <ViberBadge className="size-6 shrink-0 border border-[#8e80ee]" />,
+    icon: <ViberBadge className="size-5 shrink-0 border border-[#8e80ee]" />,
   },
   {
     href: site.telegram,
     label: "Telegram",
     note: site.replyTime,
     icon: (
-      <TelegramBadge className="size-6 shrink-0 border border-[#0088ba] text-[#0088ba]" />
+      <TelegramBadge className="size-5 shrink-0 border border-[#0088ba] text-[#0088ba]" />
     ),
   },
   {
     href: `mailto:${site.email}`,
     label: "Пошта",
     note: site.email,
-    icon: <MailIcon className="size-6 shrink-0 text-blue-300" />,
+    icon: <MailIcon className="size-5 shrink-0 text-blue-300" />,
   },
 ];
 
@@ -92,9 +92,8 @@ export function ContactMenu() {
           role="menu"
           aria-label="Зв'язок"
           /* Ширина порахована під найдовший підпис — «Відповідаємо
-             протягом 5–10 хв» при 260px обрізався, а підказка над
-             власним же меню була б лікуванням симптому */
-          className="absolute right-0 top-full z-50 mt-1.5 w-[300px] rounded-[12px] border border-grey-200 bg-white p-1.5 shadow-lg"
+             протягом 5–10 хв» при 260px обрізався */
+          className="absolute right-0 top-full z-50 mt-1.5 w-[280px] rounded-[12px] border border-grey-200 bg-white p-1.5 shadow-lg"
         >
           {channels.map((c) => (
             <a
