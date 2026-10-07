@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CircleCheckIcon, StarFilledIcon } from "@/components/ui/icons";
-import { RegionBar } from "@/components/layout/region-bar";
 import { PartGallery } from "@/components/catalog/part-gallery";
 import { PartInfoCard } from "@/components/catalog/part-info-card";
 import { PartActions } from "@/components/catalog/part-actions";
@@ -112,8 +111,6 @@ export default async function PartPage({
 
   return (
     <>
-      <RegionBar />
-
       <section className="bg-white py-12">
         <Container className="flex flex-col gap-7">
           <Breadcrumbs

@@ -77,18 +77,25 @@ export function Header() {
               />
             </Link>
 
-            {/* Поле пошуку забирає вільну ширину — це головна дія шапки.
-                Межа в 560px, щоб на широкому екрані воно не розтягувалось
-                через пів сторінки й лишало повітря між блоками */}
-            <HeaderSearch className="hidden min-w-0 flex-1 lg:block lg:max-w-[560px]" />
+            {/* Поле пошуку забирає всю вільну ширину: без обмеження зверху
+                зайве місце не збирається в діру між ним і контактами */}
+            <HeaderSearch className="hidden min-w-0 flex-1 lg:block" />
 
-            <div className="flex items-center gap-2 lg:gap-6">
+            {/* Два окремі блоки: «зв'язатися» і «мій кабінет». Усередині
+                кожного крок 12px, між ними 20px і розділова лінія —
+                інакше п'ять кружків поспіль читаються як один ряд */}
+            <div className="flex shrink-0 items-center gap-2 lg:gap-5">
               {/* Месенджери — значками без підписів і лише там, де після
                   поля пошуку лишається місце */}
               <Contacts
                 className="hidden items-center gap-3 lg:flex"
                 messengersClassName="hidden xl:flex"
                 compact
+              />
+
+              <span
+                aria-hidden
+                className="hidden h-8 w-px shrink-0 bg-grey-200 lg:block"
               />
 
               <div className="hidden items-center gap-2 lg:flex">
