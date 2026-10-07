@@ -6,7 +6,15 @@ const link =
   "flex w-fit items-center gap-2 text-[16px] font-semibold leading-[1.5] transition-opacity hover:opacity-80";
 
 /** Телефон / Viber / Telegram — однакові в шапці й у мобільному меню */
-export function Contacts({ className }: { className?: string }) {
+export function Contacts({
+  className,
+  messengersClassName,
+}: {
+  className?: string;
+  /** Viber і Telegram ховаємо окремо: у шапці на вузькому desktop
+      місце потрібне полю пошуку, а телефон має лишитися видимим */
+  messengersClassName?: string;
+}) {
   return (
     <div className={cn("flex", className)}>
       <a href={site.phoneHref} className={`${link} text-blue-300`}>
@@ -16,12 +24,18 @@ export function Contacts({ className }: { className?: string }) {
         <span className="tnum whitespace-nowrap">{site.phone}</span>
       </a>
 
-      <a href={site.viber} className={`${link} text-[#8e80ee]`}>
+      <a
+        href={site.viber}
+        className={cn(link, "text-[#8e80ee]", messengersClassName)}
+      >
         <ViberBadge className="size-8 shrink-0 border border-[#8e80ee]" />
         Viber
       </a>
 
-      <a href={site.telegram} className={`${link} text-[#0088ba]`}>
+      <a
+        href={site.telegram}
+        className={cn(link, "text-[#0088ba]", messengersClassName)}
+      >
         <TelegramBadge className="size-8 shrink-0 border border-[#0088ba]" />
         Telegram
       </a>

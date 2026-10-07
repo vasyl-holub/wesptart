@@ -48,7 +48,7 @@ export type NavGroup = {
 
 export const mainNav: NavGroup[] = [
   {
-    label: "Каталог брендів",
+    label: "Каталог",
     href: "/catalog",
     items: [
       {
@@ -64,8 +64,10 @@ export const mainNav: NavGroup[] = [
     ],
   },
   { label: "Доставка і оплата", href: "/delivery" },
-  { label: "Гарантія", href: "/warranty" },
-  { label: "Співпраця", href: "/cooperation" },
+  /* «Гарантія» живе у футері й на сторінці доставки — у шапці вона
+     займала місце, якого потребує завжди відкрите поле пошуку */
+  { label: "Для бізнесу", href: "/cooperation" },
+  { label: "Франшиза", href: "/franchise" },
   { label: "Про нас", href: "/about" },
   { label: "Контакти", href: "/contacts" },
 ];
@@ -80,7 +82,7 @@ export const footerNav: { title: string; items: NavLink[] }[] = [
       { label: "Рекламація", href: "/claim" },
       { label: "Прайс-лист", href: "/price-list" },
       { label: "Крос-номери", href: "/cross" },
-      { label: "Співпраця", href: "/cooperation" },
+      { label: "Для бізнесу", href: "/cooperation" },
       { label: "Питання та відповіді", href: "/faq" },
     ],
   },

@@ -4,7 +4,7 @@ import { mainNav } from "@/lib/site";
 import { Container } from "@/components/ui/container";
 import { CartIcon, ChevronDownIcon, UserIcon } from "@/components/ui/icons";
 import { Contacts } from "@/components/layout/contacts";
-import { HeaderSearch } from "@/components/search/header-search";
+import { HeaderSearch, MobileSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CartBadge } from "@/components/layout/cart-badge";
 
@@ -64,32 +64,30 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-grey-200 bg-white">
       <div className="relative">
         <Container className="py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-6 lg:gap-12">
-              <Link
-                href="/"
-                aria-label="WestPart — головна"
-                className="shrink-0"
-              >
-                <Image
-                  src="/logo.svg"
-                  alt="WestPart"
-                  width={161}
-                  height={54}
-                  priority
-                  unoptimized
-                  className="h-[54px] w-auto"
-                />
-              </Link>
+          <div className="flex items-center justify-between gap-4 lg:gap-8">
+            <Link href="/" aria-label="WestPart — головна" className="shrink-0">
+              <Image
+                src="/logo.svg"
+                alt="WestPart"
+                width={161}
+                height={54}
+                priority
+                unoptimized
+                className="h-[54px] w-auto"
+              />
+            </Link>
 
-              <Contacts className="hidden items-center gap-5 lg:flex" />
-            </div>
+            {/* Поле пошуку забирає всю вільну ширину — це головна дія шапки */}
+            <HeaderSearch className="hidden min-w-0 flex-1 lg:block" />
 
-            {/* На мобільному в макеті лишається тільки бургер */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 lg:gap-5">
+              {/* Месенджери з'являються, коли лишається місце після поля */}
+              <Contacts
+                className="hidden items-center gap-5 lg:flex"
+                messengersClassName="hidden xl:flex"
+              />
+
               <div className="hidden items-center gap-2 lg:flex">
-                <HeaderSearch />
-
                 {/* relative — щоб лічильник позиціонувався від кнопки */}
                 <Link
                   href="/cart"
@@ -104,6 +102,8 @@ export function Header() {
                 </Link>
               </div>
 
+              {/* На мобільному лишаються лупа й бургер */}
+              <MobileSearch />
               <MobileMenu />
             </div>
           </div>

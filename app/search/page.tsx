@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchIcon } from "@/components/ui/icons";
+import { SEARCH_PLACEHOLDER } from "@/lib/search";
 import { PartCard } from "@/components/catalog/part-card";
 import { VinBanner } from "@/components/home/vin-banner";
 import { searchProducts } from "@/lib/api/product";
@@ -52,8 +53,8 @@ export default async function SearchPage({
                 defaultValue={q}
                 autoComplete="off"
                 spellCheck={false}
-                aria-label="Артикул або OEM-номер"
-                placeholder="Артикул або OEM-номер"
+                aria-label={SEARCH_PLACEHOLDER}
+                placeholder={SEARCH_PLACEHOLDER}
                 className="h-full min-w-0 flex-1 bg-transparent px-5 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:outline-none"
               />
               <button

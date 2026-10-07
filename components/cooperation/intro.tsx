@@ -13,7 +13,7 @@ export function CooperationIntro() {
     <section className="bg-blue-25 py-8 lg:py-12">
       <Container>
         <Breadcrumbs
-          items={[{ label: "Головна", href: "/" }, { label: "Співпраця" }]}
+          items={[{ label: "Головна", href: "/" }, { label: "Для бізнесу" }]}
         />
 
         <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-14">

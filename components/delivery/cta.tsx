@@ -32,6 +32,15 @@ export function DeliveryCta() {
             {site.phone}
           </a>
         </div>
+
+        {/* «Гарантія» більше не в головному меню — лишаємо вхід звідси
+            й із футера, бо для B2B це одна з ключових сторінок */}
+        <Link
+          href="/warranty"
+          className="text-[16px] leading-[1.5] text-blue-50 underline underline-offset-4 transition-opacity hover:opacity-80"
+        >
+          Гарантія та повернення
+        </Link>
       </Container>
     </section>
   );
