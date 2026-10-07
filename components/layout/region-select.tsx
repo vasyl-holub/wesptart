@@ -51,21 +51,23 @@ export function RegionSelect({
         aria-expanded={open}
         aria-label="Ваша область"
         className={cn(
-          "flex h-7 items-center gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] transition-colors",
-          /* Поки не вибрано — кнопка синя: це запрошення до дії,
-             а не просто поле з типовим значенням */
-          value
-            ? open
-              ? "border-blue-300 text-black-900"
-              : "border-grey-300 text-black-900 hover:border-blue-300"
-            : "border-blue-300 text-blue-300 hover:bg-blue-25",
+          /* Вигляд однаковий і до вибору, і після: поки області немає,
+             на її місці стоїть прочерк, як у незаповненому полі */
+          "flex h-7 min-w-[120px] items-center justify-between gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] transition-colors",
+          open ? "border-blue-300" : "border-grey-300 hover:border-blue-300",
         )}
       >
-        <span className="whitespace-nowrap">{value ?? placeholder}</span>
+        <span
+          className={cn(
+            "whitespace-nowrap",
+            value ? "text-black-900" : "text-grey-600",
+          )}
+        >
+          {value ?? placeholder}
+        </span>
         <ChevronDownIcon
           className={cn(
-            "size-4 shrink-0 transition-transform duration-200",
-            value ? "text-grey-700" : "text-blue-300",
+            "size-4 shrink-0 text-grey-700 transition-transform duration-200",
             open && "rotate-180",
           )}
         />

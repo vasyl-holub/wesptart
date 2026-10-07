@@ -47,16 +47,14 @@ export function RegionStrip({ regions }: { regions: string[] }) {
     <div className="flex w-full items-center justify-between gap-x-8">
       <div className="flex items-center gap-2">
         <MapPinIcon className="size-5 shrink-0 text-blue-300" />
-        {region && (
-          <p className="whitespace-nowrap text-[14px] leading-[1.5] text-grey-700">
-            Ваша область:
-          </p>
-        )}
+        <p className="whitespace-nowrap text-[14px] leading-[1.5] text-grey-700">
+          Ваша область:
+        </p>
         <RegionSelect
           regions={regions}
           value={region}
           onChange={setRegion}
-          placeholder="Виберіть свою область"
+          placeholder="—"
         />
       </div>
 
