@@ -72,10 +72,10 @@ export function RegionStrip({ regions }: { regions: string[] }) {
             />
           </>
         ) : (
-          region && (
-            /* Своєї точки в області немає — показуємо, чим привеземо */
-            <Item icon={TruckIcon} label="Доставка" value={carriers} />
-          )
+          /* Своєї точки немає або область ще не вибрана — у будь-якому
+             разі правда одна: туди возять перевізники. Смуга при цьому
+             не стоїть напівпорожньою */
+          <Item icon={TruckIcon} label="Доставка" value={carriers} />
         )}
 
         <ContactMenu />
