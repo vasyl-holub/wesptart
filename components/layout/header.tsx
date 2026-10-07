@@ -81,23 +81,9 @@ export function Header() {
                 зайве місце не збирається в діру між ним і контактами */}
             <HeaderSearch className="hidden min-w-0 flex-1 lg:block" />
 
-            {/* Два окремі блоки: «зв'язатися» і «мій кабінет». Усередині
-                кожного крок 12px, між ними 20px і розділова лінія —
-                інакше п'ять кружків поспіль читаються як один ряд */}
-            <div className="flex shrink-0 items-center gap-2 lg:gap-5">
-              {/* Месенджери — значками без підписів і лише там, де після
-                  поля пошуку лишається місце */}
-              <Contacts
-                className="hidden items-center gap-3 lg:flex"
-                messengersClassName="hidden xl:flex"
-                compact
-              />
-
-              <span
-                aria-hidden
-                className="hidden h-8 w-px shrink-0 bg-grey-200 lg:block"
-              />
-
+            {/* Контакти переїхали в рядок меню — тут вони відбирали в поля
+                пошуку майже 270px, а там праворуч місце стояло порожнім */}
+            <div className="flex shrink-0 items-center gap-2">
               <div className="hidden items-center gap-2 lg:flex">
                 {/* relative — щоб лічильник позиціонувався від кнопки */}
                 <Link
@@ -123,29 +109,39 @@ export function Header() {
 
       <div className="hidden border-t border-grey-200 lg:block">
         <Container className="py-3">
-          <nav
-            className="flex items-center gap-12"
-            aria-label="Головна навігація"
-          >
-            {mainNav.map((group) =>
-              group.items ? (
-                <NavDropdown
-                  key={group.label}
-                  label={group.label}
-                  href={group.href}
-                  items={group.items}
-                />
-              ) : (
-                <Link
-                  key={group.label}
-                  href={group.href!}
-                  className="text-[16px] font-medium leading-[1.5] text-black-900 transition-colors hover:text-blue-300"
-                >
-                  {group.label}
-                </Link>
-              ),
-            )}
-          </nav>
+          <div className="flex items-center justify-between gap-8">
+            <nav
+              className="flex items-center gap-8 xl:gap-12"
+              aria-label="Головна навігація"
+            >
+              {mainNav.map((group) =>
+                group.items ? (
+                  <NavDropdown
+                    key={group.label}
+                    label={group.label}
+                    href={group.href}
+                    items={group.items}
+                  />
+                ) : (
+                  <Link
+                    key={group.label}
+                    href={group.href!}
+                    className="text-[16px] font-medium leading-[1.5] text-black-900 transition-colors hover:text-blue-300"
+                  >
+                    {group.label}
+                  </Link>
+                ),
+              )}
+            </nav>
+
+            {/* Телефон лишається на очах і при прокрутці: рядок меню
+                закріплений разом із шапкою */}
+            <Contacts
+              className="hidden shrink-0 items-center gap-3 lg:flex"
+              messengersClassName="hidden xl:flex"
+              compact
+            />
+          </div>
         </Container>
       </div>
     </header>
