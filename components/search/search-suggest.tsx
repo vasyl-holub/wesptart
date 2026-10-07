@@ -146,11 +146,13 @@ export function SearchSuggest({
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
+      {/* Поле і кнопка — один суцільний елемент: так пошук читається як
+          головна дія шапки, а не як два випадкові контроли поруч */}
       <form
         action="/search"
         role="search"
         onSubmit={onSubmit}
-        className="flex items-stretch gap-2"
+        className="flex h-12 w-full items-center overflow-hidden rounded-[8px] border border-grey-300 bg-white transition-colors focus-within:border-blue-300"
       >
         <input
           name="q"
@@ -171,14 +173,17 @@ export function SearchSuggest({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className="h-12 min-w-0 flex-1 rounded-[8px] border border-grey-300 px-4 text-[16px] text-black-900 placeholder:text-grey-600 focus:border-blue-300 focus:outline-none"
+          className="h-full min-w-0 flex-1 bg-transparent px-4 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:outline-none"
         />
         <button
           type="submit"
-          className="inline-flex h-12 shrink-0 items-center gap-2 rounded-[8px] bg-blue-300 px-5 text-[16px] font-semibold text-white transition-colors hover:bg-blue-700"
+          aria-label="Знайти"
+          className="flex h-full shrink-0 items-center justify-center gap-2 bg-blue-300 px-4 text-[16px] font-semibold leading-[1.5] text-white transition-colors hover:bg-blue-700 xl:px-5"
         >
           <SearchIcon className="size-6" />
-          <span className="hidden sm:inline">Знайти</span>
+          {/* На вузькому desktop підпис з'їдав би ширину, яка потрібна
+              плейсхолдеру; у мобільній панелі місця вистачає */}
+          <span className="hidden max-lg:inline xl:inline">Знайти</span>
         </button>
       </form>
 

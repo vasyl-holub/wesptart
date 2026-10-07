@@ -77,14 +77,18 @@ export function Header() {
               />
             </Link>
 
-            {/* Поле пошуку забирає всю вільну ширину — це головна дія шапки */}
-            <HeaderSearch className="hidden min-w-0 flex-1 lg:block" />
+            {/* Поле пошуку забирає вільну ширину — це головна дія шапки.
+                Межа в 560px, щоб на широкому екрані воно не розтягувалось
+                через пів сторінки й лишало повітря між блоками */}
+            <HeaderSearch className="hidden min-w-0 flex-1 lg:block lg:max-w-[560px]" />
 
-            <div className="flex items-center gap-2 lg:gap-5">
-              {/* Месенджери з'являються, коли лишається місце після поля */}
+            <div className="flex items-center gap-2 lg:gap-6">
+              {/* Месенджери — значками без підписів і лише там, де після
+                  поля пошуку лишається місце */}
               <Contacts
-                className="hidden items-center gap-5 lg:flex"
+                className="hidden items-center gap-3 lg:flex"
                 messengersClassName="hidden xl:flex"
+                compact
               />
 
               <div className="hidden items-center gap-2 lg:flex">

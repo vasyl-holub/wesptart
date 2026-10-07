@@ -9,11 +9,15 @@ const link =
 export function Contacts({
   className,
   messengersClassName,
+  compact = false,
 }: {
   className?: string;
   /** Viber і Telegram ховаємо окремо: у шапці на вузькому desktop
       місце потрібне полю пошуку, а телефон має лишитися видимим */
   messengersClassName?: string;
+  /** Без підписів біля значків — значки месенджерів упізнавані самі,
+      а в шапці кожні зайві сто пікселів ідуть полю пошуку */
+  compact?: boolean;
 }) {
   return (
     <div className={cn("flex", className)}>
@@ -26,18 +30,22 @@ export function Contacts({
 
       <a
         href={site.viber}
+        aria-label="Viber"
+        title="Viber"
         className={cn(link, "text-[#8e80ee]", messengersClassName)}
       >
         <ViberBadge className="size-8 shrink-0 border border-[#8e80ee]" />
-        Viber
+        {!compact && "Viber"}
       </a>
 
       <a
         href={site.telegram}
+        aria-label="Telegram"
+        title="Telegram"
         className={cn(link, "text-[#0088ba]", messengersClassName)}
       >
         <TelegramBadge className="size-8 shrink-0 border border-[#0088ba]" />
-        Telegram
+        {!compact && "Telegram"}
       </a>
     </div>
   );
