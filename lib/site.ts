@@ -56,12 +56,11 @@ export const regions = [
   "Чернігівська",
 ] as const;
 
-/** Домашня область магазину — Луцьк, тож нею і відкриваємо смугу */
-export const defaultRegion = "Волинська";
-
 export const pickup = {
   address: "м. Луцьк, вул. Конякіна 18а",
-  hours: "Пн-Пт 09:00-18:00, Сб 10:00-15:00",
+  /* Звірено з lib/contacts.ts і з workingHours вище — раніше тут стояли
+     09:00-18:00 і Сб 10:00-15:00, що не збігалося ні з тим, ні з тим */
+  hours: "Пн–Пт 9:00–17:00, Сб 9:00–13:00",
 } as const;
 
 export type NavLink = { label: string; href: string; note?: string };

@@ -14,12 +14,16 @@ import { cn } from "@/lib/cn";
  */
 export function RegionSelect({
   regions,
-  defaultRegion,
+  value,
+  onChange,
+  placeholder,
 }: {
   regions: string[];
-  defaultRegion: string;
+  /** null — область ще не вибрана, показуємо запрошення */
+  value: string | null;
+  onChange: (region: string) => void;
+  placeholder: string;
 }) {
-  const [value, setValue] = useState(defaultRegion);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -47,14 +51,21 @@ export function RegionSelect({
         aria-expanded={open}
         aria-label="Ваша область"
         className={cn(
-          "flex h-7 items-center gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] text-black-900 transition-colors",
-          open ? "border-blue-300" : "border-grey-300 hover:border-blue-300",
+          "flex h-7 items-center gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] transition-colors",
+          /* Поки не вибрано — кнопка синя: це запрошення до дії,
+             а не просто поле з типовим значенням */
+          value
+            ? open
+              ? "border-blue-300 text-black-900"
+              : "border-grey-300 text-black-900 hover:border-blue-300"
+            : "border-blue-300 text-blue-300 hover:bg-blue-25",
         )}
       >
-        <span className="whitespace-nowrap">{value}</span>
+        <span className="whitespace-nowrap">{value ?? placeholder}</span>
         <ChevronDownIcon
           className={cn(
-            "size-4 shrink-0 text-grey-700 transition-transform duration-200",
+            "size-4 shrink-0 transition-transform duration-200",
+            value ? "text-grey-700" : "text-blue-300",
             open && "rotate-180",
           )}
         />
@@ -75,7 +86,7 @@ export function RegionSelect({
                 role="option"
                 aria-selected={selected}
                 onClick={() => {
-                  setValue(region);
+                  onChange(region);
                   setOpen(false);
                 }}
                 className={cn(
