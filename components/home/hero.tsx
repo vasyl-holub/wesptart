@@ -37,7 +37,7 @@ const entries = [
 
 export function Hero() {
   return (
-    <section className="bg-blue-25 py-12">
+    <section className="bg-blue-25 pb-12 pt-6">
       <Container className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-[70px]">
         <div className="flex flex-col gap-6 lg:w-[580px] lg:shrink-0 lg:gap-10">
           <div className="flex flex-col gap-4">

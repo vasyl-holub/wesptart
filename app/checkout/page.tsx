@@ -24,7 +24,7 @@ export default async function CheckoutPage() {
   if (cart.items.length === 0) redirect("/cart");
 
   return (
-    <section className="bg-white py-8 lg:py-12">
+    <section className="bg-white pb-8 pt-6 lg:pb-12">
       <Container className="flex flex-col gap-8">
         <Breadcrumbs
           items={[

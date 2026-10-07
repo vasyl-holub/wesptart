@@ -36,7 +36,7 @@ export default async function BlogPage({ searchParams }: PageProps<"/blog">) {
 
   return (
     <>
-      <Container className="py-8 lg:py-12">
+      <Container className="pb-8 pt-6 lg:pb-12">
         <Breadcrumbs
           items={[{ label: "Головна", href: "/" }, { label: "Статті" }]}
         />

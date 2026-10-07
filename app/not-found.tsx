@@ -34,7 +34,7 @@ const shortcuts = [
 
 export default function NotFound() {
   return (
-    <section className="py-12 lg:py-20">
+    <section className="pb-12 pt-6 lg:pb-20">
       <Container className="flex flex-col items-start gap-8">
         <div className="flex max-w-[640px] flex-col gap-4">
           <span className="tnum text-[64px] font-semibold leading-[1] text-blue-50 lg:text-[88px]">

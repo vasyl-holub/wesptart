@@ -34,7 +34,7 @@ export default async function CartPage() {
       {/* Приводить значок у шапці до того, що насправді в кошику */}
       <CartCountSync count={cart.items.length} />
 
-      <Container className="py-8 lg:py-12">
+      <Container className="pb-8 pt-6 lg:pb-12">
         <Breadcrumbs
           items={[{ label: "Головна", href: "/" }, { label: "Кошик" }]}
         />

@@ -111,7 +111,7 @@ export default async function PartPage({
 
   return (
     <>
-      <section className="bg-white py-12">
+      <section className="bg-white pb-12 pt-6">
         <Container className="flex flex-col gap-7">
           <Breadcrumbs
             items={[

@@ -113,7 +113,7 @@ export default async function CarModelPage({
     <>
       {/* Без синьої підкладки: на цьому кроці підбору користувач уже
           в процесі, і кольорова шапка лише відсуває вибір року вниз */}
-      <section className="pt-8 lg:pt-12">
+      <section className="pt-6">
         <Container className="flex flex-col gap-4">
           <Breadcrumbs
             items={[

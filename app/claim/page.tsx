@@ -45,7 +45,7 @@ const channels = [
 export default function ClaimPage() {
   return (
     <>
-      <section className="bg-blue-25 py-8 lg:py-12">
+      <section className="bg-blue-25 pb-8 pt-6 lg:pb-12">
         <Container>
           <Breadcrumbs
             items={[{ label: "Головна", href: "/" }, { label: "Рекламація" }]}

@@ -17,7 +17,7 @@ export default async function AccountLayout({
   const name = user.firstName || user.fullName || user.email || "";
 
   return (
-    <Container className="py-8 lg:py-12">
+    <Container className="pb-8 pt-6 lg:pb-12">
       <Breadcrumbs
         items={[{ label: "Головна", href: "/" }, { label: "Кабінет" }]}
       />

@@ -35,7 +35,7 @@ export default async function CarBrandPage({
 
   return (
     <>
-      <section className="bg-blue-25 py-8 lg:py-12">
+      <section className="bg-blue-25 pb-8 pt-6 lg:pb-12">
         <Container className="flex flex-col gap-4">
           <Breadcrumbs
             items={[

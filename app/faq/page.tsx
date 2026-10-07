@@ -43,7 +43,7 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
       />
 
-      <section className="pt-8 lg:pt-12">
+      <section className="pt-6">
         <Container>
           <Breadcrumbs
             items={[

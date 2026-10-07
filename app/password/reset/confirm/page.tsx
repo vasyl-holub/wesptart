@@ -35,7 +35,7 @@ export default async function PasswordResetConfirmPage({
   const siteKey = valid ? await getSiteKey() : "";
 
   return (
-    <Container className="py-8 lg:py-12">
+    <Container className="pb-8 pt-6 lg:pb-12">
       <Breadcrumbs
         items={[
           { label: "Головна", href: "/" },
