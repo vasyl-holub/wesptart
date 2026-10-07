@@ -52,16 +52,15 @@ export function RegionSelect({
         aria-label="Ваша область"
         className={cn(
           /* Вигляд однаковий і до вибору, і після: поки області немає,
-             на її місці стоїть прочерк, як у незаповненому полі */
-          "flex h-7 min-w-[120px] items-center justify-between gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] transition-colors",
+             на її місці стоїть прочерк, як у незаповненому полі.
+             Ширина стала й порахована під найдовшу назву — інакше
+             кнопка стрибала б, а за нею й уся смуга */
+          "flex h-7 w-[180px] items-center justify-between gap-1.5 rounded-[6px] border bg-white pl-2 pr-1.5 text-[14px] font-semibold leading-[1.5] transition-colors",
           open ? "border-blue-300" : "border-grey-300 hover:border-blue-300",
         )}
       >
         <span
-          className={cn(
-            "whitespace-nowrap",
-            value ? "text-black-900" : "text-grey-600",
-          )}
+          className={cn("truncate", value ? "text-black-900" : "text-grey-600")}
         >
           {value ?? placeholder}
         </span>
