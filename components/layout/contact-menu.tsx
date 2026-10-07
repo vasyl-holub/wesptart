@@ -91,7 +91,10 @@ export function ContactMenu() {
         <div
           role="menu"
           aria-label="Зв'язок"
-          className="absolute right-0 top-full z-50 mt-1.5 w-[260px] rounded-[12px] border border-grey-200 bg-white p-1.5 shadow-lg"
+          /* Ширина порахована під найдовший підпис — «Відповідаємо
+             протягом 5–10 хв» при 260px обрізався, а підказка над
+             власним же меню була б лікуванням симптому */
+          className="absolute right-0 top-full z-50 mt-1.5 w-[300px] rounded-[12px] border border-grey-200 bg-white p-1.5 shadow-lg"
         >
           {channels.map((c) => (
             <a
