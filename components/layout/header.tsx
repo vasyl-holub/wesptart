@@ -3,7 +3,6 @@ import Link from "next/link";
 import { mainNav } from "@/lib/site";
 import { Container } from "@/components/ui/container";
 import { CartIcon, ChevronDownIcon, UserIcon } from "@/components/ui/icons";
-import { Contacts } from "@/components/layout/contacts";
 import { HeaderSearch, MobileSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CartBadge } from "@/components/layout/cart-badge";
@@ -77,9 +76,12 @@ export function Header() {
               />
             </Link>
 
-            {/* Поле пошуку забирає всю вільну ширину: без обмеження зверху
-                зайве місце не збирається в діру між ним і контактами */}
-            <HeaderSearch className="hidden min-w-0 flex-1 lg:block" />
+            {/* Поле не розтягуємо на всю вільну ширину — на широкому екрані
+                воно б тягнулося через пів сторінки. Обмежуємо й центруємо
+                між логотипом і кабінетом */}
+            <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+              <HeaderSearch className="w-full max-w-[640px]" />
+            </div>
 
             {/* Контакти переїхали в рядок меню — тут вони відбирали в поля
                 пошуку майже 270px, а там праворуч місце стояло порожнім */}
@@ -111,7 +113,7 @@ export function Header() {
         <Container className="py-3">
           <div className="flex items-center justify-between gap-8">
             <nav
-              className="flex items-center gap-8 xl:gap-12"
+              className="flex items-center gap-12"
               aria-label="Головна навігація"
             >
               {mainNav.map((group) =>
@@ -133,14 +135,6 @@ export function Header() {
                 ),
               )}
             </nav>
-
-            {/* Телефон лишається на очах і при прокрутці: рядок меню
-                закріплений разом із шапкою */}
-            <Contacts
-              className="hidden shrink-0 items-center gap-3 lg:flex"
-              messengersClassName="hidden xl:flex"
-              compact
-            />
           </div>
         </Container>
       </div>
