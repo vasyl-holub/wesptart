@@ -6,6 +6,7 @@ import { CartIcon, ChevronDownIcon, UserIcon } from "@/components/ui/icons";
 import { HeaderSearch, MobileSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CartBadge } from "@/components/layout/cart-badge";
+import { RegionBar } from "@/components/layout/region-bar";
 
 /** Кругла кнопка-дія: біла з рамкою, як у макеті */
 const action =
@@ -58,9 +59,15 @@ function NavDropdown({
   );
 }
 
-export function Header() {
+export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-grey-200 bg-white">
+      {/* Смуга всередині закріпленої шапки, а не над нею: при переході
+          роутер прокручує до верху першого елемента сторінки й свідомо
+          пропускає sticky-блоки, тож усе, що лежить вище, зникало з очей
+          (docs/01-app/03-api-reference/02-components/link.md) */}
+      <RegionBar />
+
       <div className="relative">
         <Container className="py-4">
           <div className="flex items-center justify-between gap-4 lg:gap-8">

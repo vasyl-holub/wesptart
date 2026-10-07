@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
-import { RegionBar } from "@/components/layout/region-bar";
 import { Footer } from "@/components/layout/footer";
 import { site } from "@/lib/site";
 
@@ -51,9 +50,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Перейти до вмісту
         </a>
-        {/* Над шапкою й поза sticky: довідкова смуга має їхати вгору
-            разом зі сторінкою, а не висіти перед очима */}
-        <RegionBar />
         <Header />
         <main id="main" className="flex-1">
           {children}
