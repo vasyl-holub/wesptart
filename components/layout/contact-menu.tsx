@@ -16,27 +16,29 @@ const channels = [
     href: site.phoneHref,
     label: "Зателефонувати",
     note: site.phone,
-    icon: <PhoneIcon className="size-5 shrink-0 text-blue-300" />,
+    icon: <PhoneIcon className="size-[26px] shrink-0 text-blue-300" />,
   },
   {
     href: site.viber,
     label: "Viber",
     note: site.replyTime,
-    icon: <ViberBadge className="size-5 shrink-0 border border-[#8e80ee]" />,
+    icon: (
+      <ViberBadge className="size-[26px] shrink-0 border border-[#8e80ee]" />
+    ),
   },
   {
     href: site.telegram,
     label: "Telegram",
     note: site.replyTime,
     icon: (
-      <TelegramBadge className="size-5 shrink-0 border border-[#0088ba] text-[#0088ba]" />
+      <TelegramBadge className="size-[26px] shrink-0 border border-[#0088ba] text-[#0088ba]" />
     ),
   },
   {
     href: `mailto:${site.email}`,
     label: "Пошта",
     note: site.email,
-    icon: <MailIcon className="size-5 shrink-0 text-blue-300" />,
+    icon: <MailIcon className="size-[26px] shrink-0 text-blue-300" />,
   },
 ];
 
