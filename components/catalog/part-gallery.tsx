@@ -17,16 +17,31 @@ export function PartGallery({
   /** Прев'ю ролика — остання мініатюра в стрічці */
   video?: string;
   alt: string;
-  /** Артикул для заглушки, коли фото немає зовсім */
+  /** Артикул для заглушки, коли показати нічого */
   article?: string;
 }) {
   const [active, setActive] = useState(0);
-  /* Порожні рядки серед зображень трапляються, та й товар буває зовсім
-     без фото. next/image на такому src кидає помилку в консоль і змушує
-     браузер тягнути сторінку вдруге, тому відсіюємо їх одразу */
-  const thumbs = (video ? [...photos, video] : photos).filter(Boolean);
-  const isVideo = (i: number) => Boolean(video) && i === thumbs.length - 1;
-  const current = thumbs[Math.min(active, thumbs.length - 1)];
+  /**
+   * Биті джерела відсіюємо на ходу. Частина знімків лежить на сервері
+   * магазину, частина — на CDN постачальника, і окремі файли в базі є,
+   * а на диску їх немає. Замість зламаної іконки браузера показуємо
+   * наступний кадр, а коли всі вичерпані — заглушку, як у картках.
+   */
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
+
+  /* Порожні рядки серед зображень трапляються: next/image на такому src
+     кидає помилку й змушує браузер тягнути сторінку вдруге */
+  const all = (video ? [...photos, video] : photos).filter(Boolean);
+  const thumbs = all.filter((src) => !broken.has(src));
+
+  /* Список міг скоротитися під активним кадром — тримаємо індекс у межах */
+  const index = Math.min(active, Math.max(0, thumbs.length - 1));
+  const current = thumbs[index];
+  const isVideo = (src: string) => Boolean(video) && src === video;
+
+  function markBroken(src: string) {
+    setBroken((prev) => new Set(prev).add(src));
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -35,6 +50,7 @@ export function PartGallery({
       <div className="relative aspect-square w-full overflow-hidden rounded-[24px] border border-grey-200 bg-white">
         {current ? (
           <Image
+            key={current}
             src={current}
             alt={alt}
             fill
@@ -42,6 +58,7 @@ export function PartGallery({
             className="object-cover"
             priority
             unoptimized={isRemoteImage(current)}
+            onError={() => markBroken(current)}
           />
         ) : (
           <PartImage
@@ -57,18 +74,18 @@ export function PartGallery({
         <div className="flex flex-wrap gap-3">
           {thumbs.map((src, i) => (
             <button
-              key={i}
+              key={src}
               type="button"
               onClick={() => setActive(i)}
               aria-label={
-                isVideo(i)
+                isVideo(src)
                   ? "Відео про товар"
-                  : `Фото ${i + 1} з ${photos.length}`
+                  : `Фото ${i + 1} з ${thumbs.length}`
               }
-              aria-pressed={active === i}
+              aria-pressed={i === index}
               className={cn(
                 "relative h-[66px] w-20 shrink-0 overflow-hidden rounded-[12px] transition-opacity",
-                active === i
+                i === index
                   ? "border-2 border-blue-300"
                   : "border border-grey-200 opacity-80 hover:opacity-100",
               )}
@@ -80,8 +97,9 @@ export function PartGallery({
                 sizes="80px"
                 className="object-cover"
                 unoptimized={isRemoteImage(src)}
+                onError={() => markBroken(src)}
               />
-              {isVideo(i) && (
+              {isVideo(src) && (
                 <YoutubeMark className="absolute left-1/2 top-1/2 w-[35px] -translate-x-1/2 -translate-y-1/2" />
               )}
             </button>
