@@ -67,6 +67,8 @@ type Response = {
     name: string | null;
     slug: string | null;
     isInProductLike?: boolean | null;
+    /** Головне фото лежить окремо від галереї і часто буває єдиним */
+    image: string | null;
     images: string[] | null;
     weight: string | null;
     rating: string | null;
@@ -110,6 +112,7 @@ const PRODUCT = /* GraphQL */ `
       num
       name
       slug
+      image
       images
       weight
       rating
@@ -281,7 +284,13 @@ export async function getProduct(id: string): Promise<Product | null> {
     num: p.num ?? "",
     name: p.name ?? "Товар",
     slug: p.slug ?? "",
-    images: (p.images ?? []).filter(Boolean),
+    /* Головне фото бекенд віддає окремим полем, а images тримає лише
+       додаткові кадри — і найчастіше він порожній. Беремо обидва, як у
+       списку товарів, інакше галерея показувала заглушку там, де в
+       каталозі фото було видно */
+    images: [
+      ...new Set([p.image, ...(p.images ?? [])].filter(Boolean)),
+    ] as string[],
     brand: p.manufacturer?.name ?? null,
     brandSlug: p.manufacturer?.slug ?? null,
     isFavorite: Boolean(p.isInProductLike),
