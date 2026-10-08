@@ -15,6 +15,7 @@ import { PartRecommended } from "@/components/catalog/part-recommended";
 import { VinBanner } from "@/components/home/vin-banner";
 import type { OfferRow } from "@/components/catalog/offers-table";
 import { getProductSeo } from "@/lib/api/seo";
+import { getCurrentUser } from "@/lib/api/auth";
 import { getProduct, productTitle } from "@/lib/api/product";
 
 export async function generateMetadata({
@@ -46,6 +47,10 @@ export default async function PartPage({
   const { id } = await params;
   const product = await getProduct(id);
   if (!product) notFound();
+
+  /* Залогіненому ціна вже порахована під його рівень, тож «від» вводило б
+     в оману: це не нижня межа діапазону, а саме його ціна */
+  const user = await getCurrentUser();
 
   const title = productTitle(product);
   const inStock = Boolean(
@@ -205,7 +210,10 @@ export default async function PartPage({
             </div>
 
             <div className="flex flex-col gap-3 lg:order-2 xl:order-3">
-              <PartActions product={product} />
+              <PartActions
+                product={product}
+                priceLabel={user ? "Ваша ціна" : "Від"}
+              />
               <PriceLevel />
             </div>
           </div>

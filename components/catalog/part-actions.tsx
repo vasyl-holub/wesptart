@@ -27,7 +27,14 @@ const promises = [
   "Пояснимо різницю між аналогами та строками",
 ];
 
-export function PartActions({ product }: { product: Product }) {
+export function PartActions({
+  product,
+  priceLabel = "Від",
+}: {
+  product: Product;
+  /** Для свого клієнта це вже його ціна з урахуванням рівня, а не «від» */
+  priceLabel?: string;
+}) {
   const offer = product.bestOffer;
   const available = Boolean(offer?.canBuy && (offer?.count ?? 0) > 0);
   const max = offer?.count ?? 99;
@@ -52,7 +59,7 @@ export function PartActions({ product }: { product: Product }) {
         <div className="flex flex-col gap-1.5">
           <p className="flex items-baseline gap-2.5">
             <span className="text-[16px] leading-[1.5] text-black-900">
-              Від
+              {priceLabel}
             </span>
             <span className="tnum text-[24px] font-semibold leading-[1.5] text-green-300">
               {formatMoney(offer.price ?? 0)}

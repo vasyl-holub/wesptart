@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { gql, gqlRaw } from "@/lib/api/graphql";
 import { getApiAuth } from "@/lib/api/session";
 
@@ -176,16 +177,20 @@ const ME = /* GraphQL */ `
   }
 `;
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const auth = await getApiAuth();
-  if (!auth) return null;
-  try {
-    const data = await gql<{ user: CurrentUser | null }>(ME, { auth });
-    return data.user;
-  } catch {
-    return null;
-  }
-}
+/* cache() — щоб сторінка, яка питає «хто я» двічі (скажімо, підпис ціни
+   і блок рівня цін), не слала два однакові запити на бекенд */
+export const getCurrentUser = cache(
+  async function getCurrentUser(): Promise<CurrentUser | null> {
+    const auth = await getApiAuth();
+    if (!auth) return null;
+    try {
+      const data = await gql<{ user: CurrentUser | null }>(ME, { auth });
+      return data.user;
+    } catch {
+      return null;
+    }
+  },
+);
 
 /* ------------------------------------------- Відновлення пароля */
 
