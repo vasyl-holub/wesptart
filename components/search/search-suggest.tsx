@@ -141,7 +141,21 @@ export function SearchSuggest({
     if (!query) return;
     setOpen(false);
     onNavigate?.();
-    router.push(vin ? requestHref : `/search?q=${encodeURIComponent(query)}`);
+
+    if (vin) {
+      router.push(requestHref);
+      return;
+    }
+
+    /* Підказки вже показали єдиний збіг — ведемо прямо на товар, не
+       ганяючи людину через сторінку результатів. Якщо відповідь ще не
+       прийшла, те саме зробить сама сторінка пошуку */
+    if (fresh?.total === 1 && items[0]) {
+      go(items[0]);
+      return;
+    }
+
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   }
 
   return (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Pagination } from "@/components/ui/pagination";
@@ -27,6 +28,13 @@ export default async function SearchPage({
   const page = Math.max(1, Number(sp.page) || 1);
 
   const { items, total } = await searchProducts(q, page, PER_PAGE);
+
+  /* Єдиний збіг — показувати список з одного рядка нема сенсу, ведемо
+     одразу на товар. redirect поза Server Action замінює запис в історії,
+     тож «Назад» веде на сторінку до пошуку, а не знову сюди. */
+  const only = total === 1 ? items[0] : undefined;
+  if (only?.slug && only.id) redirect(`/part/${only.slug}/${only.id}`);
+
   const base = `/search?q=${encodeURIComponent(q)}`;
 
   return (
