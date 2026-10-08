@@ -47,12 +47,15 @@ export function PartInfoCard({
 }) {
   const [fullText, setFullText] = useState(false);
   const [allSpecs, setAllSpecs] = useState(false);
-  /* Які довгі значення розгорнув користувач — по назві характеристики */
-  const [openSpecs, setOpenSpecs] = useState<string[]>([]);
+  /* Які довгі значення розгорнув користувач — за місцем у списку.
+     По назві не можна: бекенд уміє віддати ту саму характеристику двічі,
+     і тоді два рядки розгортались би разом, а React скаржився б на
+     однаковий key у сусідів */
+  const [openSpecs, setOpenSpecs] = useState<number[]>([]);
 
-  const toggleSpec = (label: string) =>
+  const toggleSpec = (i: number) =>
     setOpenSpecs((list) =>
-      list.includes(label) ? list.filter((x) => x !== label) : [...list, label],
+      list.includes(i) ? list.filter((x) => x !== i) : [...list, i],
     );
 
   const shown = allSpecs ? specs : specs.slice(0, VISIBLE_SPECS);
@@ -87,13 +90,13 @@ export function PartInfoCard({
         </h2>
 
         <dl className="flex flex-col gap-2">
-          {shown.map((s) => {
+          {shown.map((s, i) => {
             const long = s.value.length > LONG_VALUE;
-            const open = openSpecs.includes(s.label);
+            const open = openSpecs.includes(i);
             return (
               /* items-start, щоб при переносі значення назва й лінія лишались
                  на першому рядку, а не зʼїжджали в середину */
-              <div key={s.label} className="flex items-start gap-2">
+              <div key={`${s.label}-${i}`} className="flex items-start gap-2">
                 <dt className="shrink-0 whitespace-nowrap text-[14px] leading-[1.5] text-grey-700">
                   {s.label}
                 </dt>
@@ -117,7 +120,7 @@ export function PartInfoCard({
                   {long && (
                     <button
                       type="button"
-                      onClick={() => toggleSpec(s.label)}
+                      onClick={() => toggleSpec(i)}
                       aria-expanded={open}
                       className="text-[13px] font-semibold leading-[1.5] text-blue-300 transition-opacity hover:opacity-80"
                     >
