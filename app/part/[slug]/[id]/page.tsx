@@ -162,11 +162,14 @@ export default async function PartPage({
                 {inStock ? "В наявності" : "Немає в наявності"}
               </span>
 
-              {product.code && (
+              {/* У code бекенд тримає артикул із префіксом виробника
+                  («NTY-EZCRE027»), у num — сам артикул. Виробник показаний
+                  поруч окремим полем, тож у коді він лише заважає читати */}
+              {(product.num || product.code) && (
                 <p className="flex gap-2 text-[16px] leading-[1.5]">
                   <span className="text-grey-700">Код товару:</span>
                   <span className="tnum font-semibold text-black-900">
-                    {product.code}
+                    {product.num || product.code}
                   </span>
                 </p>
               )}
