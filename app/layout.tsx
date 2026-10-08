@@ -42,6 +42,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
+      /* Next 16 більше не вимикає сам scroll-behavior: smooth на час
+         переходу, тож плавна прокрутка розтягувала б і стрибок на верх
+         нової сторінки. Атрибут повертає попередню поведінку
+         (docs/01-app/02-guides/upgrading/version-16.md) */
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-white font-sans">

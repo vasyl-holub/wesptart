@@ -190,7 +190,11 @@ export default async function PartPage({
               1024–1279: галерея і купівля в рядок, опис під ними на всю ширину. */}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
             <div id="gallery" className="scroll-mt-24 lg:order-1">
-              <PartGallery photos={product.images} alt={title} />
+              <PartGallery
+                photos={product.images}
+                alt={title}
+                article={product.num}
+              />
             </div>
 
             <div
