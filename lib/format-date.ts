@@ -21,3 +21,21 @@ export function formatDateShort(iso: string | null) {
     year: "numeric",
   }).format(d);
 }
+
+/**
+ * Дата з часом: «12.06.2026, 14:30». Потрібна там, де в один день
+ * трапляється кілька записів і порядок важливий, — у листуванні
+ * щодо замовлення.
+ */
+export function formatDateTime(iso: string | null) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}

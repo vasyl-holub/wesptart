@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/account/status-badge";
+import { OrderComments } from "@/components/account/order-comments";
 import {
   orderTone,
   type OrderListItem,
@@ -29,7 +30,12 @@ export function OrderCard({
             Замовлення №{order.number ?? order.id}
           </Link>
         </h3>
-        <StatusBadge label={label} tone={orderTone(order.status)} />
+        <div className="flex items-center gap-3">
+          {/* Листування поруч зі статусом: обидва відповідають на одне
+              питання — що зараз із замовленням */}
+          <OrderComments comments={order.comments} />
+          <StatusBadge label={label} tone={orderTone(order.status)} />
+        </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">

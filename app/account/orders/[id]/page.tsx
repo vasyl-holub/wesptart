@@ -18,7 +18,7 @@ import {
 } from "@/lib/api/orders";
 import { productTitle } from "@/lib/api/product";
 import { formatMoney } from "@/lib/cn";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 
 export const metadata: Metadata = {
   title: "Замовлення",
@@ -28,7 +28,18 @@ export const metadata: Metadata = {
 export default async function OrderDetailsPage({
   params,
 }: PageProps<"/account/orders/[id]">) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  /* Глобальні id бекенда — це base64, тож вони закінчуються на «==», а в
+     адресі рядка це вже %3D%3D. Next віддає параметр таким, як він стоїть
+     в URL, і без декодування бекенд відповідає «Invalid ID specified» —
+     сторінка замовлення падала в 404 при прямому відкритті чи перезавантаженні. */
+  const id = (() => {
+    try {
+      return decodeURIComponent(rawId);
+    } catch {
+      return rawId;
+    }
+  })();
 
   const [order, statuses, returnDict] = await Promise.all([
     getOrder(id),
@@ -304,21 +315,23 @@ export default async function OrderDetailsPage({
           Листування з менеджером
         </h3>
 
+        {/* Уся історія листування, доступна клієнту: службові помітки
+            менеджерів сюди не потрапляють — їх відсіює lib/api/orders */}
         {order.comments.length > 0 && (
           <ul className="flex flex-col gap-3">
             {order.comments.map((c) => (
               <li
                 key={c.id}
                 className={
-                  c.managerName
-                    ? "flex flex-col gap-1 rounded-[12px] bg-blue-25 px-4 py-3"
-                    : "flex flex-col gap-1 rounded-[12px] border border-grey-200 px-4 py-3"
+                  c.own
+                    ? "flex flex-col gap-1 rounded-[12px] border border-grey-200 px-4 py-3"
+                    : "flex flex-col gap-1 rounded-[12px] bg-blue-25 px-4 py-3"
                 }
               >
                 <span className="text-[13px] leading-[1.45] text-grey-600">
-                  {c.managerName ?? "Ви"} · {formatDate(c.created)}
+                  {c.author} · {formatDateTime(c.created)}
                 </span>
-                <span className="text-[15px] leading-[1.5] text-black-900">
+                <span className="whitespace-pre-line text-[15px] leading-[1.5] text-black-900">
                   {c.text}
                 </span>
               </li>

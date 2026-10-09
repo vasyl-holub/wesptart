@@ -78,6 +78,72 @@ export function itemTone(status: number | null): StatusTone {
 
 /* ------------------------------------------------------ Замовлення */
 
+export type OrderComment = {
+  id: string;
+  text: string;
+  created: string;
+  /** Хто написав: «Ви» або магазин */
+  author: string;
+  /** Коментар самого клієнта — у списку виглядає інакше */
+  own: boolean;
+};
+
+/**
+ * Види коментарів до замовлення. Перевірено на живих даних кабінету:
+ *   1 — написав сам клієнт: примітка при оформленні або звернення звідси;
+ *   2 — повідомлення магазину клієнту («Доставка затримується…»);
+ *   3 — службова помітка менеджера: скорочення на кшталт «б», «пз»,
+ *       «не було з сігнеди» і системні рядки «Web замовлення».
+ *
+ * Клієнту показуємо лише перші два. Решту ховаємо за замовчуванням, а не
+ * виключаємо третій: якщо на бекенді зʼявиться новий службовий вид, він
+ * не протече в кабінет сам собою.
+ */
+const COMMENT_FROM_CLIENT = 1;
+const COMMENT_FROM_SHOP = 2;
+
+type RawComment = {
+  id: string;
+  type: number | null;
+  text: string | null;
+  created: string;
+  manager: { fullName: string | null } | null;
+};
+
+function visibleComments(edges: RawComment[] | undefined | null) {
+  return (edges ?? [])
+    .filter(
+      (c) =>
+        c.text?.trim() &&
+        (c.type === COMMENT_FROM_CLIENT || c.type === COMMENT_FROM_SHOP),
+    )
+    .map((c) => ({
+      id: c.id,
+      text: c.text!.trim(),
+      created: c.created,
+      author:
+        c.type === COMMENT_FROM_CLIENT
+          ? "Ви"
+          : (c.manager?.fullName ?? "WestPart"),
+      own: c.type === COMMENT_FROM_CLIENT,
+    }));
+}
+
+/** Шматок запиту однаковий і для списку, і для картки замовлення */
+const COMMENT_FIELDS = /* GraphQL */ `
+  comments {
+    edges {
+      id
+      type
+      text
+      created
+      manager {
+        fullName
+      }
+    }
+  }
+`;
+
 export type OrderListItem = {
   id: string;
   number: number | null;
@@ -88,6 +154,8 @@ export type OrderListItem = {
   shipped: string | null;
   deliveryDeclaration: string;
   itemsCount: number;
+  /** Лише ті коментарі, які клієнту можна бачити */
+  comments: OrderComment[];
 };
 
 type OrderAllResponse = {
@@ -107,6 +175,7 @@ type OrderAllResponse = {
       shipped: string | null;
       deliveryDeclaration: string;
       items: { totalCount: number | null } | null;
+      comments: { edges: RawComment[] } | null;
     }[];
   } | null;
 };
@@ -136,6 +205,7 @@ const ORDER_LIST = /* GraphQL */ `
         items {
           totalCount
         }
+        ${COMMENT_FIELDS}
       }
     }
   }
@@ -194,6 +264,7 @@ export async function getOrders(
         shipped: o.shipped,
         deliveryDeclaration: o.deliveryDeclaration,
         itemsCount: o.items?.totalCount ?? 0,
+        comments: visibleComments(o.comments?.edges),
       })),
       pagesCount: conn.pagesCount ?? 0,
       totalCount: conn.totalCount ?? 0,
@@ -255,14 +326,6 @@ export type OrderDetails = {
   items: OrderItem[];
 };
 
-export type OrderComment = {
-  id: string;
-  text: string;
-  created: string;
-  /** Порожньо — значить, повідомлення писав сам клієнт */
-  managerName: string | null;
-};
-
 const ORDER_ONE = /* GraphQL */ `
   query Order($id: ID!) {
     order(id: $id) {
@@ -292,16 +355,7 @@ const ORDER_ONE = /* GraphQL */ `
       canBeReturned
       printUrl
       checkUrl
-      comments {
-        edges {
-          id
-          text
-          created
-          manager {
-            fullName
-          }
-        }
-      }
+      ${COMMENT_FIELDS}
       items {
         edges {
           id
@@ -353,14 +407,7 @@ type OrderOneResponse = {
     canBeReturned: boolean | null;
     printUrl: string | null;
     checkUrl: string | null;
-    comments: {
-      edges: {
-        id: string;
-        text: string;
-        created: string;
-        manager: { fullName: string | null } | null;
-      }[];
-    } | null;
+    comments: { edges: RawComment[] } | null;
     items: {
       edges: {
         id: string;
@@ -420,12 +467,7 @@ export async function getOrder(id: string): Promise<OrderDetails | null> {
       canBeReturned: Boolean(o.canBeReturned),
       printUrl: backendUrl(o.printUrl),
       checkUrl: backendUrl(o.checkUrl),
-      comments: (o.comments?.edges ?? []).map((c) => ({
-        id: c.id,
-        text: c.text,
-        created: c.created,
-        managerName: c.manager?.fullName ?? null,
-      })),
+      comments: visibleComments(o.comments?.edges),
       items: (o.items?.edges ?? []).map((i) => ({
         id: i.id,
         status: i.status,
