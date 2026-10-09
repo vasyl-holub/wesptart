@@ -1,7 +1,9 @@
 export const site = {
   name: "WestPart",
   tagline: "магазин автозапчастин",
-  lead: "B2B-платформа автозапчастин з Польщі та ЄС",
+  /* Ім'я бренду тут не повторюємо: у футері воно стоїть логотипом просто
+     над рядком, а в OG-картинці — окремим заголовком */
+  lead: "Кузовні автозапчастини з Європи для приватних клієнтів та бізнесу",
   description:
     "Автозапчастини з Польщі та ЄС в одному B2B-кабінеті. Кузовні деталі, оптика, охолодження, механіка. Polcar, Signeda, NTY, DEPO, SRLine.",
   phone: "050-713-55-00",
@@ -101,25 +103,23 @@ export const footerNav: { title: string; items: NavLink[] }[] = [
   {
     title: "Покупцям",
     items: [
-      { label: "B2B-кабінет", href: "/login" },
+      { label: "Каталог", href: "/catalog" },
       { label: "Доставка і оплата", href: "/delivery" },
       { label: "Гарантія та повернення", href: "/warranty" },
-      { label: "Рекламація", href: "/claim" },
-      { label: "Прайс-лист", href: "/price-list" },
-      { label: "Крос-номери", href: "/cross" },
-      { label: "Для бізнесу", href: "/cooperation" },
-      { label: "Питання та відповіді", href: "/faq" },
+      { label: "VIN-підбір", href: "/requests/create" },
     ],
   },
   {
-    title: "Каталоги",
+    /* Прайс-лист і крос-номери теж тут: обидва інструменти для тих, хто
+       заливає асортимент до себе, а не купує одну деталь */
+    title: "Для бізнесу",
     items: [
-      { label: "Polcar", href: "/catalog/polcar" },
-      { label: "Signeda", href: "/catalog/signeda" },
-      { label: "NTY", href: "/catalog/nty" },
-      { label: "DEPO", href: "/catalog/depo" },
-      { label: "SRLine", href: "/catalog/srline" },
-      { label: "Інші бренди", href: "/catalog" },
+      { label: "B2B-кабінет", href: "/login" },
+      { label: "Умови співпраці", href: "/cooperation" },
+      { label: "Дропшипінг", href: "/cooperation#dropshipping" },
+      { label: "Франшиза", href: "/franchise" },
+      { label: "Прайс-лист", href: "/price-list" },
+      { label: "Крос-номери", href: "/cross" },
     ],
   },
   {
@@ -127,8 +127,9 @@ export const footerNav: { title: string; items: NavLink[] }[] = [
     items: [
       { label: "Про нас", href: "/about" },
       { label: "Блог", href: "/blog" },
-      { label: "Франшиза", href: "/franchise" },
       { label: "Контакти", href: "/contacts" },
+      { label: "Питання та відповіді", href: "/faq" },
+      { label: "Рекламація", href: "/claim" },
       { label: "Залишити відгук", href: "/feedback" },
     ],
   },

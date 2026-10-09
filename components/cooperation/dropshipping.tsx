@@ -18,7 +18,9 @@ const terms = [
 
 export function CooperationDropshipping() {
   return (
-    <section className="py-12 lg:py-16">
+    /* id — ціль посилання «Дропшипінг» із футера. scroll-margin не треба:
+       відступ під липку шапку задає scroll-padding-top на html */
+    <section id="dropshipping" className="py-12 lg:py-16">
       <Container>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
           <div className="flex max-w-[520px] flex-col gap-3">

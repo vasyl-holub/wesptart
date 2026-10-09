@@ -16,12 +16,12 @@ export function CatalogIntro() {
           </span>
 
           <h1 className="text-balance text-[28px] font-semibold leading-[1.3] text-black-900 lg:text-[40px]">
-            Каталог автозапчастин
+            Кузовні автозапчастини з Європи
           </h1>
 
           <p className="text-pretty text-[16px] leading-[1.6] text-grey-700">
-            Шукайте за номером деталі, за категорією або за маркою авто. Якщо
-            номера немає — надішліть VIN, і менеджер підбере точно.
+            Знайдіть потрібну деталь за артикулом, OEM, VIN або автомобілем.
+            WestPart організує постачання та доставку по Україні.
           </p>
         </div>
 

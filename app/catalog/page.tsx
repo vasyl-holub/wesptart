@@ -4,6 +4,8 @@ import { CatalogIntro } from "@/components/catalog-page/intro";
 import { CatalogCategories } from "@/components/catalog-page/categories";
 import { CatalogCarBrands } from "@/components/catalog-page/car-brands";
 import { CatalogSuppliers } from "@/components/catalog-page/suppliers";
+import { CatalogAudiences } from "@/components/catalog-page/audiences";
+import { CatalogAssurances } from "@/components/catalog-page/assurances";
 import { VinBanner } from "@/components/home/vin-banner";
 import { getCarBrands, getCatalogCategories } from "@/lib/api/catalog";
 
@@ -42,6 +44,11 @@ export default async function CatalogPage() {
 
       {/* Якщо людина не знайшла деталь у каталозі — наступний крок VIN */}
       <VinBanner />
+
+      {/* Роздріб уже відпрацьований вище — тепер окрема воронка для тих,
+          кому потрібне не одне замовлення */}
+      <CatalogAudiences />
+      <CatalogAssurances />
     </>
   );
 }
