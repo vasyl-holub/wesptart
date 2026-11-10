@@ -1,4 +1,5 @@
 import { backendUrl, gql, gqlRaw } from "@/lib/api/graphql";
+import { dateRange, text } from "@/lib/api/filters";
 import { getApiAuth } from "@/lib/api/session";
 import type { ApiFieldError } from "@/lib/api/auth";
 
@@ -154,6 +155,9 @@ export type OrderListItem = {
   shipped: string | null;
   deliveryDeclaration: string;
   itemsCount: number;
+  /** Сторінка для друку і вигрузка в Excel — обидва URL готує бекенд */
+  printUrl: string | null;
+  csvUrl: string | null;
   /** Лише ті коментарі, які клієнту можна бачити */
   comments: OrderComment[];
 };
@@ -174,6 +178,8 @@ type OrderAllResponse = {
       isPaid: boolean;
       shipped: string | null;
       deliveryDeclaration: string;
+      printUrl: string | null;
+      csvUrl: string | null;
       items: { totalCount: number | null } | null;
       comments: { edges: RawComment[] } | null;
     }[];
@@ -181,11 +187,25 @@ type OrderAllResponse = {
 };
 
 const ORDER_LIST = /* GraphQL */ `
-  query Orders($page: Int!, $perPage: Int!, $statuses: [String]) {
+  query Orders(
+    $page: Int!
+    $perPage: Int!
+    $statuses: [String]
+    $number: Decimal
+    $createdDateRange: DateRangeFieldInput
+    $shippedDateRange: DateRangeFieldInput
+    $itemsProductNum: String
+    $deliveryDeclaration: String
+  ) {
     orderAll(
       page: $page
       perPage: $perPage
       statuses: $statuses
+      number: $number
+      createdDateRange: $createdDateRange
+      shippedDateRange: $shippedDateRange
+      itemsProductNum: $itemsProductNum
+      deliveryDeclaration: $deliveryDeclaration
       sort: "-created"
     ) {
       pagesCount
@@ -202,6 +222,8 @@ const ORDER_LIST = /* GraphQL */ `
         isPaid
         shipped
         deliveryDeclaration
+        printUrl
+        csvUrl
         items {
           totalCount
         }
@@ -229,13 +251,30 @@ const EMPTY_PAGE: OrdersPage = {
   canceledCount: 0,
 };
 
+/** Фільтри списку замовлень — усі поля підтримує orderAll */
+export type OrderFilters = {
+  /** Номер замовлення */
+  number?: number;
+  /** Дата створення, межі включно */
+  createdFrom?: string;
+  createdTo?: string;
+  /** Дата відправлення */
+  shippedFrom?: string;
+  shippedTo?: string;
+  statuses?: string[];
+  /** Артикул запчастини в складі замовлення */
+  article?: string;
+  /** Номер ТТН перевізника */
+  declaration?: string;
+};
+
 /**
  * perPage без page бекенд мовчки ігнорує — передаємо завжди обидва.
  */
 export async function getOrders(
   page = 1,
   perPage = 10,
-  statuses?: string[],
+  filters: OrderFilters = {},
 ): Promise<OrdersPage> {
   const auth = await getApiAuth();
   if (!auth) return EMPTY_PAGE;
@@ -246,7 +285,12 @@ export async function getOrders(
       variables: {
         page,
         perPage,
-        ...(statuses?.length ? { statuses } : {}),
+        ...(filters.statuses?.length ? { statuses: filters.statuses } : {}),
+        ...(filters.number ? { number: filters.number } : {}),
+        createdDateRange: dateRange(filters.createdFrom, filters.createdTo),
+        shippedDateRange: dateRange(filters.shippedFrom, filters.shippedTo),
+        itemsProductNum: text(filters.article),
+        deliveryDeclaration: text(filters.declaration),
       },
     });
 
@@ -263,6 +307,8 @@ export async function getOrders(
         isPaid: o.isPaid,
         shipped: o.shipped,
         deliveryDeclaration: o.deliveryDeclaration,
+        printUrl: backendUrl(o.printUrl),
+        csvUrl: backendUrl(o.csvUrl),
         itemsCount: o.items?.totalCount ?? 0,
         comments: visibleComments(o.comments?.edges),
       })),
@@ -274,6 +320,76 @@ export async function getOrders(
     };
   } catch {
     return EMPTY_PAGE;
+  }
+}
+
+/* ------------------------------------------------ Робочі стани */
+
+/**
+ * Три стани, які замовник хоче бачити на головній кабінету.
+ *
+ * У довіднику бекенду немає статусу з назвою «Замовлено», тому під ним
+ * розуміємо все, що вже оформлене й у роботі, але ще не зібране:
+ * нове, підтверджено, опрацьовується, очікує поставку, очікує оплату.
+ * Якщо замовник захоче вужче — правиться один рядок нижче.
+ */
+export const ORDER_PIPELINE = [
+  {
+    key: "ordered",
+    label: "Замовлено",
+    statuses: ["1", "2", "12", "5", "6"],
+  },
+  { key: "ready", label: "Готово до відправлення", statuses: ["8"] },
+  { key: "packed", label: "Запаковано", statuses: ["9"] },
+] as const;
+
+export type PipelineStage = {
+  key: string;
+  label: string;
+  statuses: string[];
+  count: number;
+};
+
+/**
+ * Кількість замовлень у кожному стані. Бекенд не вміє групувати, тому
+ * питаємо кілька лічильників одним запитом через аліаси: perPage 1,
+ * бо потрібен лише totalCount.
+ */
+export async function getPipelineCounts(): Promise<PipelineStage[]> {
+  const auth = await getApiAuth();
+  const stages = ORDER_PIPELINE.map((s) => ({
+    key: s.key,
+    label: s.label,
+    statuses: [...s.statuses],
+    count: 0,
+  }));
+
+  if (!auth) return stages;
+
+  const vars = stages.map((_, i) => `$s${i}: [String]`).join(", ");
+  const body = stages
+    .map(
+      (_, i) =>
+        `g${i}: orderAll(page: 1, perPage: 1, statuses: $s${i}) { totalCount }`,
+    )
+    .join(" ");
+
+  try {
+    const data = await gql<
+      Record<string, { totalCount: number | null } | null>
+    >(`query PipelineCounts(${vars}) { ${body} }`, {
+      auth,
+      variables: Object.fromEntries(
+        stages.map((s, i) => [`s${i}`, s.statuses]),
+      ),
+    });
+
+    return stages.map((s, i) => ({
+      ...s,
+      count: data[`g${i}`]?.totalCount ?? 0,
+    }));
+  } catch {
+    return stages;
   }
 }
 
@@ -322,6 +438,7 @@ export type OrderDetails = {
   canBeReturned: boolean;
   printUrl: string | null;
   checkUrl: string | null;
+  csvUrl: string | null;
   comments: OrderComment[];
   items: OrderItem[];
 };
@@ -355,6 +472,7 @@ const ORDER_ONE = /* GraphQL */ `
       canBeReturned
       printUrl
       checkUrl
+      csvUrl
       ${COMMENT_FIELDS}
       items {
         edges {
@@ -407,6 +525,7 @@ type OrderOneResponse = {
     canBeReturned: boolean | null;
     printUrl: string | null;
     checkUrl: string | null;
+    csvUrl: string | null;
     comments: { edges: RawComment[] } | null;
     items: {
       edges: {
@@ -467,6 +586,7 @@ export async function getOrder(id: string): Promise<OrderDetails | null> {
       canBeReturned: Boolean(o.canBeReturned),
       printUrl: backendUrl(o.printUrl),
       checkUrl: backendUrl(o.checkUrl),
+      csvUrl: backendUrl(o.csvUrl),
       comments: visibleComments(o.comments?.edges),
       items: (o.items?.edges ?? []).map((i) => ({
         id: i.id,

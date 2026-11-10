@@ -216,16 +216,17 @@ function toOffer(raw: RawOffer): ProductOffer {
   };
 }
 
+/**
+ * `null` означає саме «такого товару немає» — сторінка віддає 404. Збій
+ * запиту свідомо не перехоплюємо: проглочена помилка перетворювала б живий
+ * індексований товар на 404, а таких адрес у Google ~2,8 млн. Нехай
+ * вилетить 500 — його Google повторює, 404 може прибрати з індексу.
+ */
 export async function getProduct(id: string): Promise<Product | null> {
   const auth = await getApiAuth();
 
-  let data: Response;
-  try {
-    /* Ціни персональні — залежать від типу клієнта, тому не кешуємо */
-    data = await gql<Response>(PRODUCT, { variables: { id }, auth });
-  } catch {
-    return null;
-  }
+  /* Ціни персональні — залежать від типу клієнта, тому не кешуємо */
+  const data = await gql<Response>(PRODUCT, { variables: { id }, auth });
 
   const p = data.product;
   if (!p) return null;

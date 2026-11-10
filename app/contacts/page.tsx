@@ -23,11 +23,15 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "contacts" */
-  const meta = await cmsMetadata("contacts", {
-    title: "Контакти",
-    description:
-      "Телефони відділів WestPart, адреса складу в Луцьку та пункту видачі в Києві. Підберемо запчастину за VIN або артикулом за 5–10 хвилин.",
-  });
+  const meta = await cmsMetadata(
+    "contacts",
+    {
+      title: "Контакти",
+      description:
+        "Телефони відділів WestPart, адреса складу в Луцьку та пункту видачі в Києві. Підберемо запчастину за VIN або артикулом за 5–10 хвилин.",
+    },
+    "/contacts",
+  );
 
   return meta;
 }

@@ -178,29 +178,32 @@ function clean(
 }
 
 /** Категорія з підкатегоріями. null, якщо такої немає або API недоступний */
+/**
+ * `null` означає саме «такої категорії немає» — тоді сторінка віддає 404.
+ * Збій запиту свідомо не перехоплюємо: якщо його проглотити й повернути
+ * `null`, недоступний бекенд перетворював би живу індексовану категорію на
+ * 404. Нехай краще вилетить 500 — його Google повторює, а 404 може
+ * прибрати сторінку з індексу.
+ */
 export async function getCategory(
   slug: string,
 ): Promise<CategoryDetails | null> {
-  try {
-    const data = await gql<CategoryResponse>(CATEGORY, {
-      variables: { slug },
-      revalidate: REVALIDATE,
-      tags: ["catalog-categories"],
-    });
+  const data = await gql<CategoryResponse>(CATEGORY, {
+    variables: { slug },
+    revalidate: REVALIDATE,
+    tags: ["catalog-categories"],
+  });
 
-    const g = data.productGroup;
-    if (!g?.slug || !g.name) return null;
+  const g = data.productGroup;
+  if (!g?.slug || !g.name) return null;
 
-    return {
-      id: g.id,
-      slug: g.slug,
-      name: g.name,
-      breadcrumbs: clean(g.breadCrumbs),
-      children: clean(g.children?.edges.filter((c) => c.isActive !== false)),
-    };
-  } catch {
-    return null;
-  }
+  return {
+    id: g.id,
+    slug: g.slug,
+    name: g.name,
+    breadcrumbs: clean(g.breadCrumbs),
+    children: clean(g.children?.edges.filter((c) => c.isActive !== false)),
+  };
 }
 
 /* ---------------------------------------------- Підбір за автомобілем ---
@@ -349,4 +352,28 @@ export async function getRequestFormOptions(): Promise<RequestFormOptions> {
   } catch {
     return { brands: [], bodies: [], transmissions: [], drives: [] };
   }
+}
+
+/**
+ * Чи існує група товарів з таким slug. Потрібно для редіректів зі старих
+ * адрес каталогу: на старому сайті категорія жила за /catalog/<slug>, а
+ * там же в нас сторінка постачальника. Тому слуг, який постачальником не
+ * є, перевіряємо тут і ведемо на /catalog/category/<slug>.
+ */
+export async function categoryExists(slug: string): Promise<boolean> {
+  const data = await gql<{ productGroup: { id: string } | null }>(
+    /* GraphQL */ `
+      query CategoryExists($slug: String!) {
+        productGroup(slug: $slug) {
+          id
+        }
+      }
+    `,
+    {
+      variables: { slug },
+      revalidate: REVALIDATE,
+      tags: ["catalog-categories", `catalog-category:${slug}`],
+    },
+  );
+  return Boolean(data.productGroup?.id);
 }

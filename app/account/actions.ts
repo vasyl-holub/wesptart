@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/account";
 import { addOrderComment, cancelOrder, createReturn } from "@/lib/api/orders";
 import { notifyAboutPayment } from "@/lib/api/payments";
+import { deleteInformers, markInformersRead } from "@/lib/api/informers";
 
 export type AccountFormState = {
   formError?: string;
@@ -399,7 +400,41 @@ export async function notifyPaymentAction(
     return { ...networkError(error), values };
   }
 
-  revalidatePath("/account/payments");
+  revalidatePath("/account/payments/notify");
   revalidatePath("/account");
   return { ok: true };
+}
+
+/* ------------------------------------------------- Повідомлення */
+
+/* Лічильник непрочитаних живе в layout кабінету, тому оновлюємо саме його:
+   інакше значок у меню показував би старе число до перезавантаження. */
+function revalidateMessages() {
+  revalidatePath("/account", "layout");
+}
+
+export async function markMessagesReadAction(formData: FormData) {
+  const ids = formData.getAll("id").map(String).filter(Boolean);
+  if (!ids.length) return;
+
+  try {
+    await markInformersRead(ids);
+  } catch {
+    /* Не критично: повідомлення лишиться непрочитаним, клієнт повторить */
+  }
+
+  revalidateMessages();
+}
+
+export async function deleteMessageAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  try {
+    await deleteInformers([id]);
+  } catch {
+    /* Те саме: краще нічого не зробити, ніж показати помилку на весь екран */
+  }
+
+  revalidateMessages();
 }

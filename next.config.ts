@@ -39,6 +39,56 @@ const mergedPages: { from: string; to: string }[] = [
   { from: "/pages/katalog-polcar", to: "/catalog/polcar" },
   { from: "/feedback/create", to: "/feedback" },
   { from: "/feedback/claim", to: "/claim" },
+
+  /* Знайдені ревізією sitemap: ці адреси індексовані, але редіректів на
+     них не було. Назви звірені по <title> живого сайту. */
+  { from: "/pages/brands", to: "/catalog" },
+  { from: "/pages/catalogs", to: "/catalog" },
+  { from: "/pages/suppliers", to: "/catalog" },
+  { from: "/pages/cooperation", to: "/cooperation" },
+  /* «Умови покупки» — про оплату й доставку, тобто наш /delivery */
+  { from: "/pages/conditions", to: "/delivery" },
+  /* «Інформація» була сторінкою-хабом із посиланнями на решту */
+  { from: "/pages/information", to: "/about" },
+];
+
+/**
+ * Шаблонні редіректи — ними закриваємо адреси, яких у старому індексі
+ * мільйони і які перекладаються на нові механічно. Вивірено по
+ * /sitemaps/sitemap.xml живого сайту: див. docs/seo-url-map.md.
+ *
+ * Негативні перевірки `(?!car/|category/)` обов'язкові: без них правило
+ * каталогу з'їло б власні маршрути нового сайту, а /catalog/category/<slug>
+ * зациклився б сам на себе.
+ */
+const patternRedirects: { source: string; destination: string }[] = [
+  /* Основна форма адреси товару на старому сайті — /part/<slug>/info/<id>.
+     Таких у sitemap ~2,85 млн, тобто майже весь індекс. Нова адреса та
+     сама без /info, тому переклад однозначний. */
+  { source: "/part/:slug/info/:id", destination: "/part/:slug/:id" },
+
+  /* Статті: всі 35 slug зі старого sitemap збігаються з тими, що віддає
+     API, тому веде один в один */
+  { source: "/pages/article/:slug", destination: "/blog/:slug" },
+
+  /* Категорії були вкладені до трьох рівнів, у нас вони пласкі. Останній
+     сегмент унікальний на всі 135 адрес (звірено зі slug у
+     productGroupAll), тому ведемо саме на нього. */
+  {
+    source: "/catalog/:a((?!car/|category/)[^/]+)/:b/:c",
+    destination: "/catalog/category/:c",
+  },
+  {
+    source: "/catalog/:a((?!car/|category/)[^/]+)/:b",
+    destination: "/catalog/category/:b",
+  },
+
+  /* Марок тут немає свідомо: у 24 з 78 slug не збігається або сторінки
+     ще немає, тому розв'язуємо їх у app/brands/[slug] — там видно
+     довідник і можна не впасти в 404. */
+
+  /* Google знає карту сайту за старою адресою */
+  { source: "/sitemaps/sitemap.xml", destination: "/sitemap.xml" },
 ];
 
 /**
@@ -60,7 +110,25 @@ const pricedRoutes = [
   "/account/:path*",
 ];
 
+/**
+ * З `trailingSlash: true` ціль без / на кінці дає зайвий крок: наш 308
+ * веде на /contacts, а Next одразу шле далі на /contacts/. Тому слеш
+ * доклеюємо тут, а не вручну в кожному правилі. Файли (зі точкою в
+ * останньому сегменті) лишаємо як є — до них слеш не додається.
+ */
+function withSlash(destination: string) {
+  const last = destination.split("/").pop() ?? "";
+  if (last.includes(".") || destination.endsWith("/")) return destination;
+  return `${destination}/`;
+}
+
 const nextConfig: NextConfig = {
+  /* Старий сайт індексований виключно з / на кінці: /part/<slug>/<id>/,
+     /catalog/<slug>/ тощо. Зі слешем ці адреси віддають 200 замість
+     редіректу, тобто зберігаються буквально — цього і вимагає ТЗ.
+     Побічно це прибирає зайвий крок нормалізації з усіх ланцюжків. */
+  trailingSlash: true,
+
   /* Фронт має жити на піддомені westpart.ua, щоб браузер віддавав
      сесійну куку Django. Локально це local.westpart.ua → 127.0.0.1
      (прописано у hosts), тому dev-сервер має приймати цей origin. */
@@ -83,11 +151,18 @@ const nextConfig: NextConfig = {
   },
 
   async redirects() {
-    return mergedPages.map(({ from, to }) => ({
-      source: from,
-      destination: to,
-      permanent: true,
-    }));
+    return [
+      ...mergedPages.map(({ from, to }) => ({
+        source: from,
+        destination: withSlash(to),
+        permanent: true,
+      })),
+      ...patternRedirects.map(({ source, destination }) => ({
+        source,
+        destination: withSlash(destination),
+        permanent: true,
+      })),
+    ];
   },
 
   images: {

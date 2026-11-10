@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { AccountNav } from "@/components/account/nav";
 import { getCurrentUser } from "@/lib/api/auth";
+import { getUnreadCount } from "@/lib/api/informers";
 
 /**
  * Охорона стоїть у layout, тому кожен вкладений розділ кабінету
@@ -13,6 +14,10 @@ export default async function AccountLayout({
 }: LayoutProps<"/account">) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  /* Лічильник у меню, а не на сторінці повідомлень: клієнт має бачити
+     непрочитане з будь-якого розділу кабінету */
+  const unread = await getUnreadCount();
 
   const name = user.firstName || user.fullName || user.email || "";
 
@@ -34,7 +39,7 @@ export default async function AccountLayout({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
-        <AccountNav />
+        <AccountNav unread={unread} />
         <div className="min-w-0">{children}</div>
       </div>
     </Container>

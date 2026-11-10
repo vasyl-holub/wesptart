@@ -2,10 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { mainNav } from "@/lib/site";
 import { Container } from "@/components/ui/container";
-import { CartIcon, ChevronDownIcon, UserIcon } from "@/components/ui/icons";
+import { CartIcon, ChevronDownIcon } from "@/components/ui/icons";
 import { HeaderSearch, MobileSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CartBadge } from "@/components/layout/cart-badge";
+import { UserButton } from "@/components/layout/user-button";
 
 /** Кругла кнопка-дія: біла з рамкою, як у макеті */
 const action =
@@ -97,9 +98,7 @@ export function Header() {
                   <CartIcon className="size-6" />
                   <CartBadge />
                 </Link>
-                <Link href="/login" aria-label="B2B-кабінет" className={action}>
-                  <UserIcon className="size-6" />
-                </Link>
+                <UserButton className={action} />
               </div>
 
               {/* На мобільному лишаються лупа й бургер */}

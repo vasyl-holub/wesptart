@@ -166,7 +166,7 @@ export function SearchSuggest({
         action="/search"
         role="search"
         onSubmit={onSubmit}
-        className="flex h-12 w-full items-center overflow-hidden rounded-[8px] border border-grey-300 bg-white transition-colors focus-within:border-blue-300"
+        className="flex h-12 w-full items-stretch overflow-hidden rounded-[8px] border border-grey-300 bg-white transition-colors focus-within:border-blue-300"
       >
         <input
           name="q"
@@ -187,12 +187,12 @@ export function SearchSuggest({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className="h-full min-w-0 flex-1 bg-transparent px-4 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent px-4 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:outline-none"
         />
         <button
           type="submit"
           aria-label="Знайти"
-          className="flex h-full shrink-0 items-center justify-center gap-2 bg-blue-300 px-4 text-[16px] font-semibold leading-[1.5] text-white transition-colors hover:bg-blue-700 xl:px-5"
+          className="flex shrink-0 items-center justify-center gap-2 bg-blue-300 px-4 text-[16px] font-semibold leading-[1.5] text-white transition-colors hover:bg-blue-700 xl:px-5"
         >
           <SearchIcon className="size-6" />
           {/* На вузькому desktop підпис з'їдав би ширину, яка потрібна

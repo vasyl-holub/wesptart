@@ -13,6 +13,7 @@ import {
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/cross" },
   title: "Крос-номери OEM — таблиці відповідності",
   description:
     "Таблиці відповідності OEM-номерів до брендів Polcar, Signeda, NTY та DEPO. Для інтеграції в інтернет-магазини, CRM та програми підбору автозапчастин.",

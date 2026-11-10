@@ -10,11 +10,15 @@ import { DeliveryCta } from "@/components/delivery/cta";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "dostavka-i-oplata" */
-  const meta = await cmsMetadata("dostavka-i-oplata", {
-    title: "Доставка і оплата — як купити автозапчастини",
-    description:
-      "Весь процес замовлення в WestPart: пошук деталі, оформлення, безготівкова оплата з ПДВ, терміни відправки та доставка власним транспортом, Новою Поштою або самовивозом.",
-  });
+  const meta = await cmsMetadata(
+    "dostavka-i-oplata",
+    {
+      title: "Доставка і оплата — як купити автозапчастини",
+      description:
+        "Весь процес замовлення в WestPart: пошук деталі, оформлення, безготівкова оплата з ПДВ, терміни відправки та доставка власним транспортом, Новою Поштою або самовивозом.",
+    },
+    "/delivery",
+  );
 
   return meta;
 }

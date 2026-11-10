@@ -5,6 +5,13 @@ import { getArticles } from "@/lib/api/content";
 
 const base = "https://westpart.ua";
 
+/* У конфізі ввімкнено trailingSlash, тому канонічна форма адреси — зі
+   слешем. Без нього Search Console звітує, що адреси з карти сайту
+   ведуть через редірект. */
+function url(path: string) {
+  return path === "/" ? `${base}/` : `${base}${path}/`;
+}
+
 /** Сторінки, які не залежать від API */
 const staticPages: {
   path: string;
@@ -39,28 +46,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages.map(({ path, priority, changeFrequency }) => ({
-      url: `${base}${path}`,
+      url: url(path),
       lastModified: now,
       changeFrequency,
       priority,
     })),
 
     ...suppliers.map((s) => ({
-      url: `${base}/catalog/${s.slug}`,
+      url: url(`/catalog/${s.slug}`),
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
 
     ...categories.map((c) => ({
-      url: `${base}/catalog/category/${c.slug}`,
+      url: url(`/catalog/category/${c.slug}`),
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
 
     ...(articles?.edges ?? []).map((a) => ({
-      url: `${base}/blog/${a.slug}`,
+      url: url(`/blog/${a.slug}`),
       lastModified: now,
       changeFrequency: "yearly" as const,
       priority: 0.4,

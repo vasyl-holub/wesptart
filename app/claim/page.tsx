@@ -12,6 +12,7 @@ import {
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/claim" },
   title: "Рекламація",
   description:
     "Як подати рекламацію на автозапчастину: які дані підготувати, куди звертатися і які строки розгляду діють у WestPart.",

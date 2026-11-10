@@ -8,11 +8,15 @@ import { CircleCheckIcon } from "@/components/ui/icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "price-list" */
-  const meta = await cmsMetadata("price-list", {
-    title: "Прайс-листи Polcar, Signeda, NTY, DEPO",
-    description:
-      "Актуальні прайс-листи постачальників WestPart у форматі Excel: ціни за рівнем співпраці, наявність по складах, щоденне оновлення. Доступ від рівня «Опт».",
-  });
+  const meta = await cmsMetadata(
+    "price-list",
+    {
+      title: "Прайс-листи Polcar, Signeda, NTY, DEPO",
+      description:
+        "Актуальні прайс-листи постачальників WestPart у форматі Excel: ціни за рівнем співпраці, наявність по складах, щоденне оновлення. Доступ від рівня «Опт».",
+    },
+    "/price-list",
+  );
 
   return meta;
 }

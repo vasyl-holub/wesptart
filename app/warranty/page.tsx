@@ -8,11 +8,15 @@ import { WarrantyExclusions } from "@/components/warranty/exclusions";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "garantiya-povernennya" */
-  const meta = await cmsMetadata("garantiya-povernennya", {
-    title: "Гарантія та повернення автозапчастин",
-    description:
-      "Офіційна гарантія 12 місяців на Polcar, NTY та Signeda, умови гарантійного розгляду, відповідальність за підбір деталі та правила повернення товару протягом 14 днів.",
-  });
+  const meta = await cmsMetadata(
+    "garantiya-povernennya",
+    {
+      title: "Гарантія та повернення автозапчастин",
+      description:
+        "Офіційна гарантія 12 місяців на Polcar, NTY та Signeda, умови гарантійного розгляду, відповідальність за підбір деталі та правила повернення товару протягом 14 днів.",
+    },
+    "/warranty",
+  );
 
   return meta;
 }

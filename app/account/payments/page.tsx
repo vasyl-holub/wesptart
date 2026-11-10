@@ -1,146 +1,166 @@
 import type { Metadata } from "next";
-import { PaymentForm } from "@/components/account/payment-form";
+import { PeriodFilter } from "@/components/account/period-filter";
+import { OrderDocs } from "@/components/account/order-docs";
 import { Pagination } from "@/components/ui/pagination";
-import { StatusBadge } from "@/components/account/status-badge";
-import { getPaymentNotices, getUnpaidOrders } from "@/lib/api/payments";
-import { getOrderOptions } from "@/lib/api/cart";
+import { getAccountRows } from "@/lib/api/accounts";
+import { getProfile } from "@/lib/api/account";
+import { readPeriod } from "@/lib/period";
 import { formatDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/cn";
+import { pluralize } from "@/lib/plural";
 
 export const metadata: Metadata = {
-  title: "Оплати",
+  title: "Взаєморозрахунки",
   robots: { index: false, follow: false },
 };
 
-const PER_PAGE = 10;
+const PER_PAGE = 25;
 
-export default async function PaymentsPage({
+export default async function MutualSettlementsPage({
   searchParams,
 }: PageProps<"/account/payments">) {
   const sp = await searchParams;
+  const period = readPeriod(sp);
   const raw = Number(typeof sp.page === "string" ? sp.page : "1");
   const page = Number.isFinite(raw) && raw > 0 ? raw : 1;
 
-  const [notices, unpaid, options] = await Promise.all([
-    getPaymentNotices(page, PER_PAGE),
-    getUnpaidOrders(),
-    getOrderOptions(),
+  const [rows, profile] = await Promise.all([
+    getAccountRows({ ...period, page, perPage: PER_PAGE }),
+    getProfile(),
   ]);
 
-  /* Дату формуємо на сервері: у клієнта може бути інший часовий пояс,
-     і тоді «сьогодні» в полі не збіглося б із датою платежу */
-  const today = new Date().toISOString().slice(0, 10);
+  const query = `from=${period.from}&to=${period.to}`;
+
+  const totals = [
+    { label: "Баланс", value: profile?.balance ?? 0 },
+    { label: "До оплати", value: profile?.debt ?? 0 },
+    { label: "Кредитний ліміт", value: profile?.balanceLimit ?? 0 },
+  ].filter((t) => t.value !== 0);
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-[20px] font-semibold leading-[1.4] text-black-900">
-            Повідомити про оплату
-          </h2>
-          <p className="text-[16px] leading-[1.6] text-grey-700">
-            Оплатили рахунок з банку — скажіть нам. Менеджер звірить надходження
-            швидше, ніж це зробить бухгалтерія за виписками, і замовлення рушить
-            далі.
-          </p>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-[22px] font-semibold leading-[1.4] text-black-900">
+          Взаєморозрахунки
+        </h2>
+        <p className="text-[16px] leading-[1.6] text-grey-700">
+          Рух по вашому рахунку: замовлення, оплати й повернення в одному
+          списку. Кожен рядок можна відкрити для друку або вивантажити.
+        </p>
+      </div>
 
-        <PaymentForm
-          payMethods={options.payMethods}
-          unpaidOrders={unpaid}
-          today={today}
-        />
-      </section>
+      {/* Поточні цифри — з профілю: вони не залежать від вибраного періоду,
+          тому стоять над фільтром, а не в підсумку таблиці */}
+      {totals.length > 0 && (
+        <dl className="grid gap-4 sm:grid-cols-3">
+          {totals.map(({ label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-1 rounded-[16px] border border-grey-200 p-5"
+            >
+              <dt className="text-[14px] leading-[1.5] text-grey-600">
+                {label}
+              </dt>
+              <dd className="tnum text-[20px] font-semibold leading-[1.4] text-black-900">
+                {formatMoney(value)}
+              </dd>
+            </div>
+          ))}
+          {profile?.creditDays ? (
+            <div className="flex flex-col gap-1 rounded-[16px] border border-grey-200 p-5">
+              <dt className="text-[14px] leading-[1.5] text-grey-600">
+                Відстрочка
+              </dt>
+              <dd className="text-[20px] font-semibold leading-[1.4] text-black-900">
+                {pluralize(profile.creditDays, "день", "дні", "днів")}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      )}
 
-      <section className="flex flex-col gap-4 border-t border-grey-200 pt-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[20px] font-semibold leading-[1.4] text-black-900">
-            Мої повідомлення
-          </h2>
-          <span className="tnum text-[15px] leading-[1.5] text-grey-700">
-            Усього: {notices.totalCount}
-          </span>
-        </div>
+      <PeriodFilter action="/account/payments" period={period} />
 
-        {notices.items.length ? (
-          <>
-            <ul className="flex flex-col gap-3">
-              {notices.items.map((n) => (
-                <li
-                  key={n.id}
-                  className="flex flex-col gap-3 rounded-[16px] border border-grey-200 p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                    <span className="tnum text-[17px] font-semibold leading-[1.4] text-black-900">
-                      {n.value === null ? "—" : formatMoney(Number(n.value))}
-                    </span>
-                    <StatusBadge
-                      label={n.isReady ? "зараховано" : "на перевірці"}
-                      tone={n.isReady ? "done" : "progress"}
-                    />
-                  </div>
-
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-                    <div className="flex flex-col gap-0.5">
-                      <dt className="text-[13px] leading-[1.45] text-grey-600">
-                        Дата оплати
-                      </dt>
-                      <dd className="text-[15px] leading-[1.5] text-black-900">
-                        {formatDate(n.date)}
-                      </dd>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <dt className="text-[13px] leading-[1.45] text-grey-600">
-                        Спосіб
-                      </dt>
-                      <dd className="text-[15px] leading-[1.5] text-black-900">
-                        {n.payMethodName ?? "—"}
-                      </dd>
-                    </div>
-                    {n.orderNumbers.length > 0 && (
-                      <div className="flex flex-col gap-0.5">
-                        <dt className="text-[13px] leading-[1.45] text-grey-600">
-                          Замовлення
-                        </dt>
-                        <dd className="tnum text-[15px] leading-[1.5] text-black-900">
-                          {n.orderNumbers.map((x) => `№${x}`).join(", ")}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
-
-                  {n.comment && (
-                    <p className="text-[14px] leading-[1.5] text-grey-700">
-                      {n.comment}
-                    </p>
+      {rows.items.length ? (
+        <>
+          <div className="overflow-x-auto rounded-[16px] border border-grey-200">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-grey-200 bg-grey-50">
+                  {["Дата", "Операція", "№", "Сума", "Залишок", ""].map(
+                    (h, i) => (
+                      <th
+                        key={h || i}
+                        scope="col"
+                        className="px-4 py-3 text-[13px] font-semibold leading-[1.45] text-grey-600"
+                      >
+                        {h}
+                      </th>
+                    ),
                   )}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.items.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-grey-200 last:border-b-0"
+                  >
+                    <td className="px-4 py-3 text-[15px] leading-[1.5] text-black-900">
+                      {formatDate(r.date)}
+                    </td>
+                    <td className="px-4 py-3 text-[15px] leading-[1.5] text-black-900">
+                      {r.type || "—"}
+                      {r.orders ? (
+                        <span className="block text-[13px] leading-[1.45] text-grey-600">
+                          {pluralize(
+                            r.orders,
+                            "замовлення",
+                            "замовлення",
+                            "замовлень",
+                          )}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="tnum px-4 py-3 text-[15px] leading-[1.5] text-black-900">
+                      {r.number ?? "—"}
+                    </td>
+                    <td className="tnum px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black-900">
+                      {r.value === null
+                        ? (r.sourceValue ?? "—")
+                        : formatMoney(r.value)}
+                    </td>
+                    <td className="tnum px-4 py-3 text-[15px] leading-[1.5] text-grey-700">
+                      {r.balance ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <OrderDocs
+                        printUrl={r.printUrl}
+                        csvUrl={r.csvUrl}
+                        compact
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-                  {/* Відповідь менеджера — те, заради чого сюди повертаються */}
-                  {n.response && (
-                    <p className="rounded-[12px] bg-blue-25 px-4 py-3 text-[14px] leading-[1.5] text-grey-700">
-                      Відповідь: {n.response}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-
-            {notices.pagesCount > 1 && (
-              <Pagination
-                current={page}
-                total={notices.pagesCount}
-                hrefFor={(n) =>
-                  n > 1 ? `/account/payments?page=${n}` : "/account/payments"
-                }
-              />
-            )}
-          </>
-        ) : (
-          <p className="rounded-[16px] border border-grey-200 p-6 text-[16px] leading-[1.6] text-grey-700">
-            Повідомлень поки немає.
-          </p>
-        )}
-      </section>
+          {rows.pagesCount > 1 && (
+            <Pagination
+              current={page}
+              total={rows.pagesCount}
+              hrefFor={(n) =>
+                `/account/payments?${query}${n > 1 ? `&page=${n}` : ""}`
+              }
+            />
+          )}
+        </>
+      ) : (
+        <p className="rounded-[16px] border border-grey-200 p-6 text-[16px] leading-[1.6] text-grey-700">
+          За вибраний період рухів по рахунку немає. Спробуйте розширити межі.
+        </p>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { getPromoProducts } from "@/lib/api/product";
 import { pluralize } from "@/lib/plural";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/promo" },
   title: "Спецпропозиції для B2B-клієнтів",
   description:
     "Ходові позиції та актуальні пропозиції WestPart для СТО, магазинів і партнерів: ціни, наявність і строки поставки.",

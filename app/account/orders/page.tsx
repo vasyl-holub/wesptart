@@ -3,7 +3,10 @@ import Link from "next/link";
 import { OrderCard } from "@/components/account/order-card";
 import { Pagination } from "@/components/ui/pagination";
 import { buttonClasses } from "@/components/ui/button";
-import { cn } from "@/lib/cn";
+import {
+  OrderFilters,
+  type OrderFilterValues,
+} from "@/components/account/order-filters";
 import { getOrders, getOrderStatuses } from "@/lib/api/orders";
 
 export const metadata: Metadata = {
@@ -13,41 +16,61 @@ export const metadata: Metadata = {
 
 const PER_PAGE = 10;
 
-/** Коди беремо з orderStatuses: 3 завершено, 4 скасовано, решта в роботі */
-const filters = [
-  { key: "", label: "Усі", statuses: undefined },
-  {
-    key: "active",
-    label: "В роботі",
-    statuses: ["1", "2", "12", "5", "6", "8", "9", "10", "11"],
-  },
-  { key: "done", label: "Завершені", statuses: ["3"] },
-  { key: "canceled", label: "Скасовані", statuses: ["4"] },
+/** Поля фільтра, які приходять з адреси як звичайний текст */
+const TEXT_KEYS = [
+  "number",
+  "article",
+  "ttn",
+  "status",
+  "cfrom",
+  "cto",
+  "sfrom",
+  "sto",
 ] as const;
+
+function readValues(sp: Record<string, string | string[] | undefined>) {
+  const out = {} as OrderFilterValues;
+  for (const key of TEXT_KEYS) {
+    const raw = sp[key];
+    out[key] = (typeof raw === "string" ? raw : "").trim();
+  }
+  return out;
+}
 
 export default async function OrdersPage({
   searchParams,
 }: PageProps<"/account/orders">) {
   const sp = await searchParams;
+  const values = readValues(sp);
 
   const rawPage = Number(typeof sp.page === "string" ? sp.page : "1");
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
-  const key = typeof sp.status === "string" ? sp.status : "";
-  const active = filters.find((f) => f.key === key) ?? filters[0];
+  /* Номер приймаємо тільки цифрами: бекенд чекає Decimal і на тексті
+     віддає помилку замість порожнього списку */
+  const digits = values.number.replace(/\D/g, "");
 
   const [data, statuses] = await Promise.all([
-    getOrders(
-      page,
-      PER_PAGE,
-      active.statuses ? [...active.statuses] : undefined,
-    ),
+    getOrders(page, PER_PAGE, {
+      number: digits ? Number(digits) : undefined,
+      statuses: values.status ? values.status.split(",") : undefined,
+      article: values.article,
+      declaration: values.ttn,
+      createdFrom: values.cfrom,
+      createdTo: values.cto,
+      shippedFrom: values.sfrom,
+      shippedTo: values.sto,
+    }),
     getOrderStatuses(),
   ]);
 
+  const applied = TEXT_KEYS.filter((k) => values[k]).length;
+
   const hrefFor = (n: number) => {
     const params = new URLSearchParams();
-    if (active.key) params.set("status", active.key);
+    for (const key of TEXT_KEYS) {
+      if (values[key]) params.set(key, values[key]);
+    }
     if (n > 1) params.set("page", String(n));
     const qs = params.toString();
     return qs ? `/account/orders?${qs}` : "/account/orders";
@@ -64,26 +87,11 @@ export default async function OrdersPage({
         </span>
       </div>
 
-      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        {filters.map((f) => (
-          <li key={f.key || "all"}>
-            <Link
-              href={
-                f.key ? `/account/orders?status=${f.key}` : "/account/orders"
-              }
-              aria-current={f.key === active.key ? "page" : undefined}
-              className={cn(
-                "flex h-10 items-center whitespace-nowrap rounded-[8px] px-4 text-[15px] leading-[1.5] transition-colors",
-                f.key === active.key
-                  ? "bg-blue-300 font-semibold text-white"
-                  : "bg-grey-100 text-grey-700 hover:bg-blue-25 hover:text-blue-300",
-              )}
-            >
-              {f.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <OrderFilters
+        values={values}
+        statuses={statuses.order}
+        applied={applied}
+      />
 
       {data.items.length ? (
         <>
@@ -106,15 +114,15 @@ export default async function OrdersPage({
       ) : (
         <div className="flex flex-col items-start gap-4 rounded-[16px] border border-grey-200 p-6">
           <p className="text-[16px] leading-[1.6] text-grey-700">
-            {active.key
-              ? "У цьому розділі замовлень немає."
+            {applied
+              ? "За цими умовами замовлень не знайдено. Спробуйте прибрати частину фільтрів."
               : "Замовлень поки немає."}
           </p>
           <Link
-            href={active.key ? "/account/orders" : "/catalog"}
+            href={applied ? "/account/orders" : "/catalog"}
             className={buttonClasses({ variant: "primary" })}
           >
-            {active.key ? "Показати всі" : "До каталогу"}
+            {applied ? "Скинути фільтри" : "До каталогу"}
           </Link>
         </div>
       )}

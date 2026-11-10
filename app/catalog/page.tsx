@@ -18,12 +18,16 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "brands" */
-  const meta = await cmsMetadata("brands", {
-    title:
-      "Каталог автозапчастин — за категорією, маркою авто й постачальником",
-    description:
-      "Каталог WestPart: пошук за артикулом і OEM-номером, підбір за маркою авто та категорією, прямі поставки Polcar, Signeda, NTY, DEPO і SRLine.",
-  });
+  const meta = await cmsMetadata(
+    "brands",
+    {
+      title:
+        "Каталог автозапчастин — за категорією, маркою авто й постачальником",
+      description:
+        "Каталог WestPart: пошук за артикулом і OEM-номером, підбір за маркою авто та категорією, прямі поставки Polcar, Signeda, NTY, DEPO і SRLine.",
+    },
+    "/catalog",
+  );
 
   return meta;
 }

@@ -29,6 +29,8 @@ export async function generateMetadata({
     description:
       seo?.metaDescription ??
       `${category.name}: ціни, наявність і строки поставки. Підбір за артикулом, OEM-номером або VIN.`,
+    /* Сторінки з ?page= склеюємо на першу: контент той самий набір товарів */
+    alternates: { canonical: `/catalog/category/${slug}` },
   };
 }
 

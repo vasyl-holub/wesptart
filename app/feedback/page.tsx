@@ -13,6 +13,7 @@ import { site } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/feedback" },
   title: "Залишити відгук",
   description:
     "Розкажіть, як пройшло замовлення у WestPart: що сподобалось і що варто виправити. Читаємо кожен відгук.",

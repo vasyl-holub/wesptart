@@ -13,11 +13,15 @@ import { AboutToday } from "@/components/about/today";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "importrer-avtozapchastyn" */
-  const meta = await cmsMetadata("importrer-avtozapchastyn", {
-    title: "Про нас — імпортер автозапчастин з Європи",
-    description:
-      "WestPart — логістично-сервісна B2B-платформа для професійного ринку автозапчастин. Працюємо з 2008 року, офіційний партнер Polcar в Україні.",
-  });
+  const meta = await cmsMetadata(
+    "importrer-avtozapchastyn",
+    {
+      title: "Про нас — імпортер автозапчастин з Європи",
+      description:
+        "WestPart — логістично-сервісна B2B-платформа для професійного ринку автозапчастин. Працюємо з 2008 року, офіційний партнер Polcar в Україні.",
+    },
+    "/about",
+  );
 
   return meta;
 }

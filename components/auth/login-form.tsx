@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Field, Input } from "@/components/ui/field";
 import { buttonClasses } from "@/components/ui/button";
 import { loginActionFn, type AuthFormState } from "@/app/login/actions";
+import { resetUserBadge } from "@/components/layout/user-button";
 
 const EMPTY: AuthFormState = {};
 
@@ -14,7 +15,14 @@ export function LoginForm() {
   const val = state.values ?? {};
 
   return (
-    <form action={action} className="flex flex-col gap-5" noValidate>
+    <form
+      action={action}
+      /* Значок у шапці має впізнати користувача одразу: layout після
+         редіректу не перемонтовується, тому штовхаємо його самі */
+      onSubmit={resetUserBadge}
+      className="flex flex-col gap-5"
+      noValidate
+    >
       {state.formError && (
         <p
           role="alert"

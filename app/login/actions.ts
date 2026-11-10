@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { loginUser, logoutUser } from "@/lib/api/auth";
+import { getCurrentUser, loginUser, logoutUser } from "@/lib/api/auth";
+import { initials } from "@/lib/initials";
 import { clearSession, saveSession } from "@/lib/api/session";
 import { GraphQLRequestError } from "@/lib/api/graphql";
 import type { AuthFormState } from "@/app/register/actions";
@@ -56,4 +57,26 @@ export async function logoutAction() {
   await logoutUser();
   await clearSession();
   redirect("/");
+}
+
+/**
+ * Хто зараз у кабінеті — для значка в шапці. Шапка живе в кореневому
+ * layout, тому питати це на сервері не можна: запит до API зробив би
+ * динамічними всі статичні сторінки. Тому так само, як з лічильником
+ * кошика — дія, яку смикає клієнтський компонент після монтування.
+ */
+export async function currentUserBadgeAction(): Promise<{
+  initials: string;
+  name: string;
+} | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const name =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.fullName ||
+    user.email ||
+    "";
+
+  return { initials: initials(user), name };
 }

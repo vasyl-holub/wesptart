@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { OrderDocs } from "@/components/account/order-docs";
 import { StatusBadge } from "@/components/account/status-badge";
 import { ReturnForm } from "@/components/account/return-form";
 import {
   CancelOrderButton,
   OrderCommentForm,
 } from "@/components/account/order-actions";
-import { buttonClasses } from "@/components/ui/button";
-import { ExternalLinkIcon } from "@/components/ui/icons";
 import {
   getOrder,
   getOrderStatuses,
@@ -64,7 +63,7 @@ export default async function OrderDetailsPage({
       label: "Доставка",
       value: order.deliveryDate && formatDate(order.deliveryDate),
     },
-    { label: "Оплата", value: order.payMethodName },
+    { label: "Спосіб оплати", value: order.payMethodName },
   ].filter((r) => r.value);
 
   return (
@@ -85,44 +84,17 @@ export default async function OrderDetailsPage({
             label={statuses.order[String(order.status)] ?? "невідомий статус"}
             tone={orderTone(order.status)}
           />
-          {order.isPaid && (
-            <span className="text-[15px] leading-[1.5] text-green-300">
-              оплачено
-            </span>
-          )}
         </div>
 
         <p className="text-[15px] leading-[1.5] text-grey-700">
           Створено {formatDate(order.created)}
         </p>
 
-        {/* Документи генерує бекенд, тому відкриваємо їх у новій вкладці */}
-        {(order.printUrl || order.checkUrl) && (
-          <div className="flex flex-wrap gap-3">
-            {order.printUrl && (
-              <a
-                href={order.printUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClasses({ variant: "outline", size: "sm" })}
-              >
-                Рахунок
-                <ExternalLinkIcon className="size-4 shrink-0" />
-              </a>
-            )}
-            {order.checkUrl && (
-              <a
-                href={order.checkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClasses({ variant: "outline", size: "sm" })}
-              >
-                Чек
-                <ExternalLinkIcon className="size-4 shrink-0" />
-              </a>
-            )}
-          </div>
-        )}
+        <OrderDocs
+          printUrl={order.printUrl}
+          csvUrl={order.csvUrl}
+          checkUrl={order.checkUrl}
+        />
       </div>
 
       <section className="flex flex-col gap-4">
@@ -295,15 +267,6 @@ export default async function OrderDetailsPage({
               </Link>
               .
             </p>
-          )}
-
-          {!order.isPaid && (
-            <Link
-              href="/account/payments"
-              className="w-fit text-[14px] font-semibold leading-[1.5] text-blue-300 transition-opacity hover:opacity-80"
-            >
-              Уже оплатили? Повідомте нас →
-            </Link>
           )}
 
           {order.canBeCancelled && <CancelOrderButton orderId={order.id} />}

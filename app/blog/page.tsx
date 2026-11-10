@@ -10,11 +10,15 @@ import { getArticles } from "@/lib/api/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "article" */
-  const meta = await cmsMetadata("article", {
-    title: "Статті про автозапчастини та роботу СТО",
-    description:
-      "Матеріали WestPart для СТО, магазинів і партнерів: як влаштований ринок автозапчастин, підбір деталей, логістика та системна робота бізнесу.",
-  });
+  const meta = await cmsMetadata(
+    "article",
+    {
+      title: "Статті про автозапчастини та роботу СТО",
+      description:
+        "Матеріали WestPart для СТО, магазинів і партнерів: як влаштований ринок автозапчастин, підбір деталей, логістика та системна робота бізнесу.",
+    },
+    "/blog",
+  );
 
   return meta;
 }

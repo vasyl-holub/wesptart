@@ -67,6 +67,12 @@ export async function getSitePage(slug: string): Promise<SitePage | null> {
 export async function cmsMetadata(
   slug: string,
   fallback: { title: string; description: string },
+  /**
+   * Власна адреса сторінки для canonical. Старий сайт віддавав canonical
+   * на кожній сторінці — без нього редизайн втрачає сигнал, за яким
+   * Google склеює адреси з параметрами (?page=2 тощо).
+   */
+  canonical?: string,
 ): Promise<Metadata> {
   const page = await getSitePage(slug);
 
@@ -74,5 +80,6 @@ export async function cmsMetadata(
     title: page?.title ? { absolute: page.title } : fallback.title,
     description: page?.description ?? fallback.description,
     ...(page?.keywords ? { keywords: page.keywords } : {}),
+    ...(canonical ? { alternates: { canonical } } : {}),
   };
 }

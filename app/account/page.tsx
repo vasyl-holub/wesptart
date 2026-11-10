@@ -3,7 +3,11 @@ import Link from "next/link";
 import { OrderCard } from "@/components/account/order-card";
 import { buttonClasses } from "@/components/ui/button";
 import { MailIcon, PhoneIcon } from "@/components/ui/icons";
-import { getOrders, getOrderStatuses } from "@/lib/api/orders";
+import {
+  getOrders,
+  getOrderStatuses,
+  getPipelineCounts,
+} from "@/lib/api/orders";
 import { getProfile } from "@/lib/api/account";
 import { formatMoney } from "@/lib/cn";
 import { pluralize } from "@/lib/plural";
@@ -16,20 +20,15 @@ export const metadata: Metadata = {
 const RECENT = 3;
 
 export default async function AccountOverviewPage() {
-  const [page, profile, statuses] = await Promise.all([
+  const [page, profile, statuses, pipeline] = await Promise.all([
     getOrders(1, RECENT),
     getProfile(),
     getOrderStatuses(),
+    getPipelineCounts(),
   ]);
 
   const debt = profile?.debt ?? 0;
   const needToPay = profile?.needToPay ?? 0;
-
-  const stats = [
-    { label: "Усього замовлень", value: String(page.totalCount) },
-    { label: "Завершених", value: String(page.completedCount) },
-    { label: "На суму", value: formatMoney(page.totalSum) },
-  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,14 +40,16 @@ export default async function AccountOverviewPage() {
             {debt > 0 && (
               <div className="flex flex-col gap-0.5">
                 <span className="text-[14px] leading-[1.5] text-danger-700">
-                  Заборгованість
+                  До оплати
                 </span>
                 <span className="tnum text-[20px] font-semibold leading-[1.4] text-danger-700">
                   {formatMoney(debt)}
                 </span>
               </div>
             )}
-            {needToPay > 0 && (
+            {/* Друга сума лише коли вона відрізняється: інакше поруч
+                стояли б дві майже однакові мітки про одне й те саме */}
+            {needToPay > 0 && needToPay !== debt && (
               <div className="flex flex-col gap-0.5">
                 <span className="text-[14px] leading-[1.5] text-danger-700">
                   До сплати
@@ -60,26 +61,42 @@ export default async function AccountOverviewPage() {
             )}
           </div>
 
-          {profile?.creditDays ? (
-            <span className="text-[14px] leading-[1.5] text-danger-700">
-              Відстрочка {pluralize(profile.creditDays, "день", "дні", "днів")}
-            </span>
-          ) : null}
+          {/* Повідомити про оплату можна лише звідси: у B2B клієнт платить
+              загальну суму, а не конкретне замовлення */}
+          <div className="flex flex-col items-start gap-1 sm:items-end">
+            {profile?.creditDays ? (
+              <span className="text-[14px] leading-[1.5] text-danger-700">
+                Відстрочка{" "}
+                {pluralize(profile.creditDays, "день", "дні", "днів")}
+              </span>
+            ) : null}
+            <Link
+              href="/account/payments/notify"
+              className="text-[14px] font-semibold leading-[1.5] text-danger-700 underline underline-offset-2 transition-opacity hover:opacity-80"
+            >
+              Уже оплатили? Повідомте нас →
+            </Link>
+          </div>
         </div>
       )}
 
+      {/* Поточні робочі стани замість підсумків за весь час: клієнта
+          цікавить, що з його замовленнями зараз, а не скільки їх було.
+          Картка веде у список, відфільтрований по тих самих статусах. */}
       <ul className="grid gap-4 sm:grid-cols-3">
-        {stats.map((s) => (
-          <li
-            key={s.label}
-            className="flex flex-col gap-1 rounded-[16px] border border-grey-200 p-5"
-          >
-            <span className="tnum text-[22px] font-semibold leading-[1.3] text-black-900">
-              {s.value}
-            </span>
-            <span className="text-[14px] leading-[1.5] text-grey-700">
-              {s.label}
-            </span>
+        {pipeline.map((stage) => (
+          <li key={stage.key}>
+            <Link
+              href={"/account/orders?status=" + stage.statuses.join(",")}
+              className="flex h-full flex-col gap-1 rounded-[16px] border border-grey-200 p-5 transition-colors hover:border-blue-300"
+            >
+              <span className="tnum text-[22px] font-semibold leading-[1.3] text-black-900">
+                {stage.count}
+              </span>
+              <span className="text-[14px] leading-[1.5] text-grey-700">
+                {stage.label}
+              </span>
+            </Link>
           </li>
         ))}
       </ul>

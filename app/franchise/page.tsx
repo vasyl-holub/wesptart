@@ -8,6 +8,7 @@ import { FranchiseSteps } from "@/components/franchise/steps";
 import { FranchiseCta } from "@/components/franchise/cta";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/franchise" },
   title: "Франшиза магазину автозапчастин WestPart",
   description:
     "Відкрийте магазин автозапчастин за готовою моделлю: три формати, налагоджена логістика з Польщі, клієнтська база регіону та підтримка центрального офісу.",

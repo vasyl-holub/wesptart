@@ -34,3 +34,5 @@ export {
   ViberBadge,
   TelegramBadge,
 } from "./social-badges";
+export { PrinterIcon, FileSpreadsheetIcon } from "./documents";
+export { WalletIcon, ChartIcon } from "./account";

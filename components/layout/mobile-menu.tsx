@@ -7,13 +7,9 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { CartBadge } from "@/components/layout/cart-badge";
 import { mainNav } from "@/lib/site";
-import {
-  CartIcon,
-  ChevronDownIcon,
-  SearchIcon,
-  UserIcon,
-} from "@/components/ui/icons";
+import { CartIcon, ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
 import { Contacts } from "@/components/layout/contacts";
+import { UserButton } from "@/components/layout/user-button";
 
 const circle =
   "inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors";
@@ -132,14 +128,7 @@ export function MobileMenu() {
                   <CartIcon className="size-6" />
                   <CartBadge />
                 </Link>
-                <Link
-                  href="/login"
-                  onClick={close}
-                  aria-label="B2B-кабінет"
-                  className={outline}
-                >
-                  <UserIcon className="size-6" />
-                </Link>
+                <UserButton className={outline} onNavigate={close} />
               </div>
             </div>
 

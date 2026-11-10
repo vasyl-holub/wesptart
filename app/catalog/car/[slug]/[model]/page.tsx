@@ -34,6 +34,7 @@ export async function generateMetadata({
   return {
     title: `Запчастини ${brand.name} ${car.name} — підбір за роком і модифікацією`,
     description: `Оберіть рік випуску та модифікацію ${brand.name} ${car.name}, щоб побачити сумісні запчастини з цінами й наявністю.`,
+    alternates: { canonical: `/catalog/car/${slug}/${model}` },
   };
 }
 

@@ -12,6 +12,7 @@ import { faq } from "@/components/faq/data";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/faq" },
   title: "Питання та відповіді",
   description:
     "Відповіді на часті питання про підбір автозапчастин, рівні цін, доставку, гарантію та повернення у WestPart.",

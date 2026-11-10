@@ -118,3 +118,124 @@ export async function getViewedProducts(
     return EMPTY;
   }
 }
+
+/* ------------------------------------------------ Переглянуті авто */
+
+export type ViewedCar = {
+  id: string;
+  viewedAt: string;
+  /** Готовий підпис від бекенду; у ньому вже і бренд, і модифікація */
+  title: string;
+  /** Сторінки окремої модифікації в каталозі немає, тому ведемо на модель */
+  href: string | null;
+};
+
+export type ViewedCarsPage = {
+  items: ViewedCar[];
+  totalCount: number;
+  pagesCount: number;
+};
+
+const EMPTY_CARS: ViewedCarsPage = { items: [], totalCount: 0, pagesCount: 0 };
+
+const VIEWED_CARS = /* GraphQL */ `
+  query ViewedCars($page: Int!, $perPage: Int!) {
+    historyCarAll(page: $page, perPage: $perPage, sort: "-created") {
+      totalCount
+      pagesCount
+      edges {
+        id
+        created
+        car {
+          id
+          name
+          toStr
+          yearStart
+          yearEnd
+          model {
+            name
+            slug
+            brand {
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+type RawViewedCar = {
+  id: string;
+  created: string;
+  car: {
+    id: string;
+    name: string | null;
+    toStr: string | null;
+    yearStart: number | null;
+    yearEnd: number | null;
+    model: {
+      name: string | null;
+      slug: string | null;
+      brand: { name: string | null; slug: string | null } | null;
+    } | null;
+  } | null;
+};
+
+export async function getViewedCars(
+  page = 1,
+  perPage = 20,
+): Promise<ViewedCarsPage> {
+  const auth = await getApiAuth();
+  if (!auth) return EMPTY_CARS;
+
+  try {
+    const data = await gql<{
+      historyCarAll: {
+        totalCount: number | null;
+        pagesCount: number | null;
+        edges: RawViewedCar[];
+      } | null;
+    }>(VIEWED_CARS, { auth, variables: { page, perPage } });
+
+    const conn = data.historyCarAll;
+    if (!conn) return EMPTY_CARS;
+
+    return {
+      /* Авто могли прибрати з довідника — такі записи пропускаємо */
+      items: conn.edges.flatMap((e) => {
+        const car = e.car;
+        if (!car) return [];
+
+        const brand = car.model?.brand;
+        const model = car.model;
+
+        /* toStr бекенд складає сам і зазвичай він найповніший; якщо його
+           немає — збираємо підпис із бренду, моделі та модифікації */
+        const title =
+          car.toStr ||
+          [brand?.name, model?.name, car.name].filter(Boolean).join(" ") ||
+          "Авто";
+
+        const years = [car.yearStart, car.yearEnd].filter(Boolean).join("–");
+
+        return [
+          {
+            id: e.id,
+            viewedAt: e.created,
+            title: years ? `${title}, ${years}` : title,
+            href:
+              brand?.slug && model?.slug
+                ? `/catalog/car/${brand.slug}/${model.slug}`
+                : null,
+          },
+        ];
+      }),
+      totalCount: conn.totalCount ?? 0,
+      pagesCount: conn.pagesCount ?? 0,
+    };
+  } catch {
+    return EMPTY_CARS;
+  }
+}

@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { cmsMetadata } from "@/lib/api/pages";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CircleCheckIcon, SearchIcon } from "@/components/ui/icons";
 import { VinBanner } from "@/components/home/vin-banner";
 import { findSupplier, suppliers } from "@/lib/suppliers";
+import { categoryExists } from "@/lib/api/catalog";
 
 export function generateStaticParams() {
   return suppliers.map((s) => ({ slug: s.slug }));
@@ -21,10 +22,14 @@ export async function generateMetadata({
   if (!s) return { title: "Постачальника не знайдено" };
 
   /* Кожен постачальник має свою сторінку в CMS замовника */
-  return cmsMetadata(s.cmsSlug, {
-    title: `Автозапчастини ${s.name} — ${s.tagline}`,
-    description: s.description[0],
-  });
+  return cmsMetadata(
+    s.cmsSlug,
+    {
+      title: `Автозапчастини ${s.name} — ${s.tagline}`,
+      description: s.description[0],
+    },
+    `/catalog/${slug}`,
+  );
 }
 
 export default async function SupplierPage({
@@ -32,7 +37,16 @@ export default async function SupplierPage({
 }: PageProps<"/catalog/[slug]">) {
   const { slug } = await params;
   const supplier = findSupplier(slug);
-  if (!supplier) notFound();
+
+  /* На старому сайті за /catalog/<slug> жила категорія, а в нас тут
+     сторінка постачальника. Щоб 24 індексовані адреси категорій не стали
+     404, перевіряємо слуг у довіднику груп і ведемо на нову адресу. */
+  if (!supplier) {
+    if (await categoryExists(slug)) {
+      permanentRedirect(`/catalog/category/${slug}/`);
+    }
+    notFound();
+  }
 
   return (
     <>

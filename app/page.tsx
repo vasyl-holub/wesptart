@@ -10,11 +10,15 @@ import { Reviews } from "@/components/home/reviews";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "main" */
-  const meta = await cmsMetadata("main", {
-    title: "Автозапчастини з Польщі та ЄС в одному B2B-кабінеті",
-    description:
-      "Кузовні деталі, оптика, охолодження та механіка з Польщі та ЄС. Точний підбір по VIN, аналоги по брендах, швидка доставка. Polcar, Signeda, NTY, DEPO, SRLine.",
-  });
+  const meta = await cmsMetadata(
+    "main",
+    {
+      title: "Автозапчастини з Польщі та ЄС в одному B2B-кабінеті",
+      description:
+        "Кузовні деталі, оптика, охолодження та механіка з Польщі та ЄС. Точний підбір по VIN, аналоги по брендах, швидка доставка. Polcar, Signeda, NTY, DEPO, SRLine.",
+    },
+    "/",
+  );
 
   return meta;
 }

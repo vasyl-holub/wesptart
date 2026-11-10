@@ -15,11 +15,15 @@ import { site } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   /* Заголовок і опис веде замовник в адмінці — сторінка "pidbir-avtozapchastyn" */
-  const meta = await cmsMetadata("pidbir-avtozapchastyn", {
-    title: "Підбір автозапчастин по VIN — створити запит",
-    description:
-      "Надішліть VIN, дані авто й опис деталі — менеджер WestPart підбере точну позицію та запропонує варіанти від бюджетних до оригінальних.",
-  });
+  const meta = await cmsMetadata(
+    "pidbir-avtozapchastyn",
+    {
+      title: "Підбір автозапчастин по VIN — створити запит",
+      description:
+        "Надішліть VIN, дані авто й опис деталі — менеджер WestPart підбере точну позицію та запропонує варіанти від бюджетних до оригінальних.",
+    },
+    "/requests/create",
+  );
 
   return meta;
 }

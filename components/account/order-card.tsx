@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/account/status-badge";
 import { OrderComments } from "@/components/account/order-comments";
+import { OrderDocs } from "@/components/account/order-docs";
 import {
   orderTone,
   type OrderListItem,
@@ -38,7 +39,7 @@ export function OrderCard({
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
         <div className="flex flex-col gap-0.5">
           <dt className="text-[13px] leading-[1.45] text-grey-600">Дата</dt>
           <dd className="text-[15px] leading-[1.5] text-black-900">
@@ -59,17 +60,6 @@ export function OrderCard({
             {order.total === null ? "—" : formatMoney(order.total)}
           </dd>
         </div>
-
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-[13px] leading-[1.45] text-grey-600">Оплата</dt>
-          <dd className="text-[15px] leading-[1.5]">
-            {order.isPaid ? (
-              <span className="text-green-300">оплачено</span>
-            ) : (
-              <span className="text-grey-700">не оплачено</span>
-            )}
-          </dd>
-        </div>
       </dl>
 
       {/* ТТН показуємо лише коли вона вже є — порожній рядок тут гірший за
@@ -83,12 +73,17 @@ export function OrderCard({
         </p>
       )}
 
-      <Link
-        href={`/account/orders/${order.id}`}
-        className="w-fit text-[15px] font-semibold leading-[1.5] text-blue-300 transition-opacity hover:opacity-80"
-      >
-        Деталі замовлення →
-      </Link>
+      {/* Документи праворуч від переходу в замовлення: друк і Excel тут
+          самодостатні — за ними не треба спершу відкривати деталі */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <Link
+          href={`/account/orders/${order.id}`}
+          className="text-[15px] font-semibold leading-[1.5] text-blue-300 transition-opacity hover:opacity-80"
+        >
+          Деталі замовлення →
+        </Link>
+        <OrderDocs printUrl={order.printUrl} csvUrl={order.csvUrl} compact />
+      </div>
     </article>
   );
 }
