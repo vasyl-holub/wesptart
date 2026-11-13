@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { logoutAction } from "@/app/login/actions";
@@ -9,6 +10,7 @@ import {
   BellIcon,
   BoxIcon,
   CarIcon,
+  ChevronDownIcon,
   ChartIcon,
   ClockIcon,
   HeartIcon,
@@ -96,31 +98,127 @@ function Badge({ count, active }: { count: number; active: boolean }) {
   );
 }
 
+function MobileLink({
+  href,
+  label,
+  Icon,
+  active,
+  indent,
+  badge = 0,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  Icon?: (props: IconProps) => React.ReactElement;
+  active: boolean;
+  indent?: boolean;
+  badge?: number;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        row,
+        "h-11 px-4 text-[15px] leading-[1.5]",
+        indent && "ml-6",
+        active ? current : idle,
+      )}
+    >
+      {Icon && <Icon className="size-5 shrink-0" />}
+      {label}
+      {badge > 0 && <Badge count={badge} active={active} />}
+    </Link>
+  );
+}
+
 export function AccountNav({ unread = 0 }: { unread?: number }) {
   const leaves = sections.flatMap((s) => s.items ?? [{ ...s }]);
   const activeHref = useActiveHref(leaves.map((l) => l.href));
+  const [open, setOpen] = useState(false);
+
+  const activeLabel =
+    leaves.find((l) => l.href === activeHref)?.label ?? "Розділи";
 
   return (
     <nav aria-label="Розділи кабінету">
-      {/* На мобільному вкладеності немає: там це стрічка з прокруткою, і
-          підпункти стоять у ній рівноправно, інакше до «Виписок» не
-          дістатись. На десктопі — звичайна бокова колонка з групами. */}
-      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 lg:hidden">
-        {leaves.map(({ href, label }) => (
-          <li key={href}>
-            <Link
-              href={href}
-              aria-current={href === activeHref ? "page" : undefined}
-              className={cn(row, rowSize, href === activeHref ? current : idle)}
-            >
-              {label}
-              {href === "/account/messages" && unread > 0 && (
-                <Badge count={unread} active={href === activeHref} />
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {/* На мобільному всі 13 пунктів одним рядком губили вкладеність і
+          вимагали горизонтального гортання. Тому тут згортання: видно
+          поточний розділ, а за дотиком — той самий список, що на
+          десктопі, з групами. */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex h-12 w-full items-center gap-3 rounded-[8px] border border-grey-200 px-4 text-[16px] leading-[1.5] text-black-900 transition-colors hover:border-blue-300"
+        >
+          <span className="font-semibold">{activeLabel}</span>
+          {unread > 0 && <Badge count={unread} active={false} />}
+          <ChevronDownIcon
+            className={cn(
+              "ml-auto size-5 shrink-0 text-grey-600 transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+
+        {open && (
+          <ul className="mt-2 flex flex-col gap-1 rounded-[12px] border border-grey-200 p-2">
+            {sections.map(({ href, label, items, Icon }) => (
+              <li key={href} className="flex flex-col gap-1">
+                {items ? (
+                  <>
+                    <span className="flex items-center gap-2.5 px-4 pt-2 text-[13px] font-semibold uppercase leading-[1.45] tracking-wide text-grey-600">
+                      <Icon className="size-4 shrink-0" />
+                      {label}
+                    </span>
+                    {items.map((item) => (
+                      <MobileLink
+                        key={item.href}
+                        href={item.href}
+                        label={item.label}
+                        active={item.href === activeHref}
+                        indent
+                        onNavigate={() => setOpen(false)}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <MobileLink
+                    href={href}
+                    label={label}
+                    Icon={Icon}
+                    active={href === activeHref}
+                    badge={href === "/account/messages" ? unread : 0}
+                    onNavigate={() => setOpen(false)}
+                  />
+                )}
+              </li>
+            ))}
+
+            {/* Вихід усередині списку, а не під ним: інакше на мобільному
+                він стояв би над вмістом сторінки постійно */}
+            <li className="mt-1 border-t border-grey-200 pt-1">
+              <form action={logoutAction} onSubmit={resetUserBadge}>
+                <button
+                  type="submit"
+                  className={cn(
+                    row,
+                    "h-11 w-full px-4 text-[15px] leading-[1.5]",
+                    "text-grey-700 hover:bg-danger-50 hover:text-danger-700",
+                  )}
+                >
+                  <LogoutIcon className="size-5 shrink-0" />
+                  Вийти
+                </button>
+              </form>
+            </li>
+          </ul>
+        )}
+      </div>
 
       <ul className="hidden lg:flex lg:flex-col lg:gap-1">
         {sections.map((section) => {
@@ -196,26 +294,6 @@ export function AccountNav({ unread = 0 }: { unread?: number }) {
           </form>
         </li>
       </ul>
-
-      {/* На мобільному вихід стоїть окремо під стрічкою — у ній він
-          губився б між розділами */}
-      <form
-        action={logoutAction}
-        onSubmit={resetUserBadge}
-        className="mt-2 lg:hidden"
-      >
-        <button
-          type="submit"
-          className={cn(
-            row,
-            rowSize,
-            "text-grey-700 hover:bg-danger-50 hover:text-danger-700",
-          )}
-        >
-          <LogoutIcon className="size-5 shrink-0" />
-          Вийти
-        </button>
-      </form>
     </nav>
   );
 }

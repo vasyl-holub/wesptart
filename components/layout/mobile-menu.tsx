@@ -7,7 +7,12 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { CartBadge } from "@/components/layout/cart-badge";
 import { mainNav } from "@/lib/site";
-import { CartIcon, ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
+import {
+  CartIcon,
+  ChevronDownIcon,
+  HeartIcon,
+  SearchIcon,
+} from "@/components/ui/icons";
 import { Contacts } from "@/components/layout/contacts";
 import { UserButton } from "@/components/layout/user-button";
 
@@ -110,7 +115,10 @@ export function MobileMenu() {
             <div className="flex shrink-0 items-center justify-between gap-4 px-4 py-4">
               <Contacts className="flex-col gap-3" />
 
-              <div className="flex flex-col gap-2">
+              {/* З планшета ці три кнопки вже стоять у шапці — у панелі
+                  вони лише дублювали б себе, тому там лишається тільки
+                  навігація й контакти */}
+              <div className="flex flex-col gap-2 md:hidden">
                 <Link
                   href="/search"
                   onClick={close}
@@ -118,6 +126,14 @@ export function MobileMenu() {
                   className={primary}
                 >
                   <SearchIcon className="size-6" />
+                </Link>
+                <Link
+                  href="/account/favorites"
+                  onClick={close}
+                  aria-label="Обране"
+                  className={outline}
+                >
+                  <HeartIcon className="size-6" />
                 </Link>
                 <Link
                   href="/cart"

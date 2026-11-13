@@ -28,6 +28,33 @@ function emit() {
   for (const fn of listeners) fn();
 }
 
+/**
+ * Підтягнути область за IP — лише коли свого вибору ще немає.
+ *
+ * Запитуємо один раз і зберігаємо результат: далі це вже «вибір
+ * користувача», і ручна зміна в селекті його перекриває назавжди.
+ * Дозволу браузера не питаємо — геодані дає хостинг із IP.
+ */
+let detecting = false;
+
+export async function detectRegion() {
+  if (detecting || getSnapshot()) return;
+  detecting = true;
+
+  try {
+    /* Слеш обов'язковий: у конфізі trailingSlash, і без нього
+       запит ішов би через зайвий редірект */
+    const res = await fetch("/api/region/");
+    if (!res.ok) return;
+    const data: { region?: string | null } = await res.json();
+    /* Поки запит ішов, користувач міг вибрати область сам — його вибір
+       важливіший за здогадку за IP */
+    if (data.region && !getSnapshot()) setRegion(data.region);
+  } catch {
+    /* Не визначили — смуга й далі питає область, як питала */
+  }
+}
+
 export function setRegion(next: string) {
   region = next;
   loaded = true;

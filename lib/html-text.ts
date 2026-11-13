@@ -144,7 +144,11 @@ export function emailDocument(html: string, subject = ""): string {
 
   return [
     "<!doctype html>",
-    '<html lang="uk"><head><meta charset="utf-8"><base target="_blank">',
+    '<html lang="uk"><head><meta charset="utf-8">',
+    /* Без viewport телефон рендерить рамку в уявний екран ~980px і лист
+       виходить дрібним — це не видно на десктопі, але ламає мобільну */
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<base target="_blank">',
     own,
     "<style>",
     OUR_STYLES,
@@ -180,8 +184,10 @@ const OUR_STYLES = `
   table { border-collapse: collapse; max-width: 100% !important; border: 0 !important }
   table td, table th { border: 0 !important }
 
-  /* А таблицю з даними малюємо як у кабінеті */
-  table:has(th) { width: 100% !important; margin: 14px 0; font-size: 14px }
+  /* А таблицю з даними малюємо як у кабінеті. На вузькому екрані вона
+     не стискається до нечитабельного, а прокручується вбік — для
+     дев'яти колонок це єдиний чесний варіант */
+  table:has(th) { width: 100% !important; min-width: 520px; margin: 14px 0; font-size: 14px }
   table:has(th) th {
     padding: 9px 12px;
     text-align: left;

@@ -38,7 +38,7 @@ export function MobileSearch() {
         aria-expanded={open}
         aria-label={open ? "Закрити пошук" : "Пошук"}
         className={cn(
-          "inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-300 text-white transition-colors hover:bg-blue-700 lg:hidden",
+          "inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-300 text-white transition-colors hover:bg-blue-700 md:hidden",
           open && "bg-blue-700",
         )}
       >
@@ -50,7 +50,7 @@ export function MobileSearch() {
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-full z-50 border-b border-grey-200 bg-white shadow-lg lg:hidden">
+        <div className="absolute inset-x-0 top-full z-50 border-b border-grey-200 bg-white shadow-lg md:hidden">
           <div className="mx-auto w-full max-w-[1280px] px-4 py-4 sm:px-6 lg:px-8">
             <SearchSuggest autoFocus onNavigate={() => setOpen(false)} />
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   BoxIcon,
   ClockIcon,
@@ -9,7 +10,7 @@ import {
 import { ContactMenu } from "@/components/layout/contact-menu";
 import { RegionSelect } from "@/components/layout/region-select";
 import { carriers, pickupByRegion } from "@/lib/pickup-points";
-import { setRegion, useRegion } from "@/lib/region-store";
+import { detectRegion, setRegion, useRegion } from "@/lib/region-store";
 
 function Item({
   icon: Icon,
@@ -42,6 +43,12 @@ function Item({
 export function RegionStrip({ regions }: { regions: string[] }) {
   const region = useRegion();
   const pickup = region ? pickupByRegion[region] : undefined;
+
+  /* Перший візит: область підставляємо за IP, далі вона лишається
+     вибором користувача й перевизначається тільки вручну */
+  useEffect(() => {
+    void detectRegion();
+  }, []);
 
   return (
     <div className="flex w-full items-center justify-between gap-x-8">

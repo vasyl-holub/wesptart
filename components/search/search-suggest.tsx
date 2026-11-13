@@ -77,7 +77,7 @@ export function SearchSuggest({
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/search/suggest?q=${encodeURIComponent(query)}`,
+          `/api/search/suggest/?q=${encodeURIComponent(query)}`,
           { signal: controller.signal },
         );
         const data = (await res.json()) as {
@@ -195,9 +195,9 @@ export function SearchSuggest({
           className="flex shrink-0 items-center justify-center gap-2 bg-blue-300 px-4 text-[16px] font-semibold leading-[1.5] text-white transition-colors hover:bg-blue-700 xl:px-5"
         >
           <SearchIcon className="size-6" />
-          {/* На вузькому desktop підпис з'їдав би ширину, яка потрібна
-              плейсхолдеру; у мобільній панелі місця вистачає */}
-          <span className="hidden max-lg:inline xl:inline">Знайти</span>
+          {/* На планшеті й вузькому десктопі підпис з'їдав би ширину, яка
+              потрібна плейсхолдеру; у мобільній панелі місця вистачає */}
+          <span className="hidden max-md:inline xl:inline">Знайти</span>
         </button>
       </form>
 

@@ -83,7 +83,68 @@ export default async function MutualSettlementsPage({
 
       {rows.items.length ? (
         <>
-          <div className="overflow-x-auto rounded-[16px] border border-grey-200">
+          {/* На телефоні таблиця з шести колонок перетворювалась на
+              горизонтальну прокрутку — там показуємо ті самі дані
+              картками, а таблицю лишаємо для широкого екрана */}
+          <ul className="flex flex-col gap-3 lg:hidden">
+            {rows.items.map((r) => (
+              <li
+                key={r.id}
+                className="flex flex-col gap-3 rounded-[16px] border border-grey-200 p-4"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-[16px] font-semibold leading-[1.4] text-black-900">
+                    {r.type || "Операція"}
+                    {r.number ? (
+                      <span className="tnum font-normal text-grey-700">
+                        {" "}
+                        №{r.number}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="text-[14px] leading-[1.5] text-grey-600">
+                    {formatDate(r.date)}
+                  </span>
+                </div>
+
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div className="flex flex-col gap-0.5">
+                    <dt className="text-[13px] leading-[1.45] text-grey-600">
+                      Сума
+                    </dt>
+                    <dd className="tnum text-[15px] font-semibold leading-[1.5] text-black-900">
+                      {r.value === null
+                        ? (r.sourceValue ?? "—")
+                        : formatMoney(r.value)}
+                    </dd>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <dt className="text-[13px] leading-[1.45] text-grey-600">
+                      Залишок
+                    </dt>
+                    <dd className="tnum text-[15px] leading-[1.5] text-grey-700">
+                      {r.balance ?? "—"}
+                    </dd>
+                  </div>
+                </dl>
+
+                {r.orders ? (
+                  <p className="text-[13px] leading-[1.45] text-grey-600">
+                    {pluralize(
+                      r.orders,
+                      "замовлення",
+                      "замовлення",
+                      "замовлень",
+                    )}
+                  </p>
+                ) : null}
+
+                <OrderDocs printUrl={r.printUrl} csvUrl={r.csvUrl} compact />
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-[16px] border border-grey-200 lg:block">
             <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-grey-200 bg-grey-50">

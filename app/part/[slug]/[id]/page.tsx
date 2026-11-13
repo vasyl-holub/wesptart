@@ -151,7 +151,9 @@ export default async function PartPage({
               </a>
             )}
 
-            <h1 className="text-[24px] font-semibold leading-[1.5] text-black-900 lg:text-[32px]">
+            {/* 24px на всіх розмірах: назви тут довгі — із переліком моделей і
+                років — і на 32px заголовок займав три рядки на весь екран */}
+            <h1 className="text-[24px] font-semibold leading-[1.3] text-black-900">
               {title}
             </h1>
 
@@ -212,6 +214,7 @@ export default async function PartPage({
             <div className="flex flex-col gap-3 lg:order-2 xl:order-3">
               <PartActions
                 product={product}
+                title={title}
                 priceLabel={user ? "Ваша ціна" : "Від"}
               />
               <PriceLevel />

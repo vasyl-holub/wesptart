@@ -13,7 +13,7 @@ import {
 import { QuantityInput } from "@/components/ui/quantity-input";
 import { FavoriteButton } from "@/components/catalog/favorite-button";
 import { formatMoney } from "@/lib/cn";
-import { site } from "@/lib/site";
+import { productUrl, viberLink } from "@/lib/viber";
 import type { Product } from "@/lib/api/product";
 import { addToCartAction } from "@/app/cart/actions";
 import { setCartCount } from "@/lib/cart-count";
@@ -29,13 +29,38 @@ const promises = [
 
 export function PartActions({
   product,
+  title,
   priceLabel = "Від",
 }: {
   product: Product;
+  /** Готовий заголовок зі сторінки: productTitle тягне next/headers,
+      тому в клієнтський компонент його не імпортуєш */
+  title: string;
   /** Для свого клієнта це вже його ціна з урахуванням рівня, а не «від» */
   priceLabel?: string;
 }) {
   const offer = product.bestOffer;
+
+  /* Менеджеру потрібне не «цікавить деталь», а яка саме: тому в кожну
+     кнопку кладемо заголовок, артикул і посилання на цю сторінку.
+     Різниця між кнопками — у питанні, а не в адресаті. */
+  const card = `${title}
+${productUrl(product.slug, product.id)}`;
+
+  const asks = {
+    request: viberLink(
+      `Доброго дня! Цікавить деталь, якої зараз немає в наявності:
+${card}
+Підкажіть, будь ласка, строк поставки або аналог.`,
+    ),
+    manager: viberLink(`Доброго дня! Питання по товару:
+${card}`),
+    vin: viberLink(
+      `Доброго дня! Хочу перевірити, чи підійде ця деталь до мого авто:
+${card}
+Мій VIN: `,
+    ),
+  };
   const available = Boolean(offer?.canBuy && (offer?.count ?? 0) > 0);
   const max = offer?.count ?? 99;
 
@@ -148,32 +173,42 @@ export function PartActions({
             )}
           </>
         ) : (
-          <Link
-            href="/requests/create"
+          <a
+            href={asks.request}
             className={`${btn} bg-blue-300 text-white hover:bg-blue-700`}
           >
             Залишити заявку
             <HeadsetIcon className="size-5 shrink-0" />
-          </Link>
+          </a>
         )}
 
         <a
-          href={site.viber}
+          href={asks.manager}
           className={`${btn} border border-blue-300 bg-white text-blue-300 hover:bg-blue-25`}
         >
           Написати менеджеру
           <HeadsetIcon className="size-5 shrink-0" />
         </a>
 
-        <Link
-          href="/requests/create"
+        <a
+          href={asks.vin}
           className={`${btn} border border-blue-300 bg-white text-blue-300 hover:bg-blue-25`}
         >
           Перевірити по VIN
           <CarIcon className="size-5 shrink-0" />
-        </Link>
+        </a>
 
         <FavoriteButton productId={product.id} initial={product.isFavorite} />
+
+        {/* Вебверсії у Viber немає, тому без застосунку кнопки вище нічого
+            не відкриють. Залишаємо звичайний шлях — інакше на десктопі це
+            глухий кут */}
+        <Link
+          href="/requests/create"
+          className="text-center text-[13px] leading-[1.5] text-grey-700 underline underline-offset-2 transition-colors hover:text-blue-300"
+        >
+          Немає Viber? Залишити заявку на сайті
+        </Link>
       </div>
 
       <ul className="flex flex-col gap-2">

@@ -26,6 +26,18 @@ const CATEGORIES = /* GraphQL */ `
         slug
         name
         isActive
+        children {
+          edges {
+            id
+            isActive
+            children {
+              edges {
+                id
+                isActive
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -46,6 +58,8 @@ const CAR_BRANDS = /* GraphQL */ `
   }
 `;
 
+type RawChildren = { edges: { id: string; isActive: boolean | null }[] } | null;
+
 type CategoriesResponse = {
   productGroupAll: {
     edges: {
@@ -53,6 +67,13 @@ type CategoriesResponse = {
       slug: string | null;
       name: string | null;
       isActive: boolean | null;
+      children: {
+        edges: {
+          id: string;
+          isActive: boolean | null;
+          children: RawChildren;
+        }[];
+      } | null;
     }[];
   };
 };
@@ -69,6 +90,52 @@ type BrandsResponse = {
   };
 };
 
+/**
+ * Скільки товарів у кожній групі — одним запитом на всі одразу.
+ *
+ * Потрібно, щоб не виводити порожні категорії: у довіднику є групи, які
+ * не мають ні товарів, ні підкатегорій, і кнопка вела в нікуди. Перевірка
+ * за даними, а не за списком винятків: на бойовій базі ті самі групи
+ * можуть бути наповнені, і тоді вони з'являться самі.
+ */
+async function productCounts(ids: string[]): Promise<Record<string, number>> {
+  if (!ids.length) return {};
+
+  const vars = ids.map((_, i) => `$g${i}: ID!`).join(", ");
+  const body = ids
+    .map(
+      (_, i) =>
+        `g${i}: productAll(group: $g${i}, page: 1, perPage: 1) { totalCount }`,
+    )
+    .join(" ");
+
+  try {
+    const data = await gql<
+      Record<string, { totalCount: number | null } | null>
+    >(`query GroupCounts(${vars}) { ${body} }`, {
+      variables: Object.fromEntries(ids.map((id, i) => [`g${i}`, id])),
+      revalidate: REVALIDATE,
+      tags: ["catalog-categories"],
+    });
+
+    return Object.fromEntries(
+      ids.map((id, i) => [id, data[`g${i}`]?.totalCount ?? 0]),
+    );
+  } catch {
+    /* Не порахували — краще показати все, ніж сховати живі категорії */
+    return Object.fromEntries(ids.map((id) => [id, 1]));
+  }
+}
+
+/** Лишає тільки ті групи, з яких є куди перейти */
+async function withContent<T extends { id: string; hasChildren: boolean }>(
+  groups: T[],
+): Promise<T[]> {
+  const needCheck = groups.filter((g) => !g.hasChildren).map((g) => g.id);
+  const counts = await productCounts(needCheck);
+  return groups.filter((g) => g.hasChildren || (counts[g.id] ?? 0) > 0);
+}
+
 /** Групи товарів верхнього рівня. Порожній масив, якщо API недоступний */
 export async function getCatalogCategories(): Promise<CatalogCategory[]> {
   try {
@@ -77,9 +144,42 @@ export async function getCatalogCategories(): Promise<CatalogCategory[]> {
       tags: ["catalog-categories"],
     });
 
-    return data.productGroupAll.edges
+    const groups = data.productGroupAll.edges
       .filter((c) => c.isActive !== false && c.slug && c.name)
-      .map((c) => ({ id: c.id, slug: c.slug!, name: c.name! }));
+      .map((c) => ({
+        id: c.id,
+        slug: c.slug!,
+        name: c.name!,
+        children: (c.children?.edges ?? [])
+          .filter((k) => k.isActive !== false)
+          .map((k) => ({
+            id: k.id,
+            hasChildren: (k.children?.edges ?? []).some(
+              (x) => x.isActive !== false,
+            ),
+          })),
+      }));
+
+    /* Перевіряти саму наявність дітей замало: трапляються гілки, де всі
+       підкатегорії порожні — тоді батько теж веде в нікуди. Тому дивимось
+       на два рівні: спершу чи жива хоч одна дитина, потім чи є товари в
+       самого батька. */
+    const childCounts = await productCounts(
+      groups.flatMap((g) =>
+        g.children.filter((k) => !k.hasChildren).map((k) => k.id),
+      ),
+    );
+
+    const hasLiveChild = (g: (typeof groups)[number]) =>
+      g.children.some((k) => k.hasChildren || (childCounts[k.id] ?? 0) > 0);
+
+    const ownCounts = await productCounts(
+      groups.filter((g) => !hasLiveChild(g)).map((g) => g.id),
+    );
+
+    return groups
+      .filter((g) => hasLiveChild(g) || (ownCounts[g.id] ?? 0) > 0)
+      .map(({ id, slug, name }) => ({ id, slug, name }));
   } catch {
     return [];
   }
@@ -142,6 +242,12 @@ const CATEGORY = /* GraphQL */ `
           slug
           name
           isActive
+          children {
+            edges {
+              id
+              isActive
+            }
+          }
         }
       }
     }
@@ -161,6 +267,7 @@ type CategoryResponse = {
         slug: string | null;
         name: string | null;
         isActive: boolean | null;
+        children: RawChildren;
       }[];
     } | null;
   } | null;
@@ -197,12 +304,25 @@ export async function getCategory(
   const g = data.productGroup;
   if (!g?.slug || !g.name) return null;
 
+  /* Та сама перевірка, що й на сторінці каталогу: підкатегорія без
+     власних дітей і без товарів — посилання в нікуди */
+  const kids = (g.children?.edges ?? [])
+    .filter((c) => c.isActive !== false && c.slug && c.name)
+    .map((c) => ({
+      id: c.id,
+      slug: c.slug!,
+      name: c.name!,
+      hasChildren: (c.children?.edges ?? []).some((k) => k.isActive !== false),
+    }));
+
+  const alive = await withContent(kids);
+
   return {
     id: g.id,
     slug: g.slug,
     name: g.name,
     breadcrumbs: clean(g.breadCrumbs),
-    children: clean(g.children?.edges.filter((c) => c.isActive !== false)),
+    children: alive.map(({ id, slug, name }) => ({ id, slug, name })),
   };
 }
 

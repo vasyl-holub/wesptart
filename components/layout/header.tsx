@@ -2,62 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { mainNav } from "@/lib/site";
 import { Container } from "@/components/ui/container";
-import { CartIcon, ChevronDownIcon } from "@/components/ui/icons";
+import { CartIcon, HeartIcon } from "@/components/ui/icons";
 import { HeaderSearch, MobileSearch } from "@/components/search/header-search";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CartBadge } from "@/components/layout/cart-badge";
+import { NavDropdown } from "@/components/layout/nav-dropdown";
 import { UserButton } from "@/components/layout/user-button";
 
 /** Кругла кнопка-дія: біла з рамкою, як у макеті */
 const action =
   "inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-grey-200 bg-white text-black-900 transition-colors hover:border-blue-300 hover:text-blue-300";
-
-function NavDropdown({
-  label,
-  href,
-  items,
-}: {
-  label: string;
-  href?: string;
-  items: NonNullable<(typeof mainNav)[number]["items"]>;
-}) {
-  return (
-    <div className="group relative">
-      <Link
-        href={href ?? "#"}
-        className="inline-flex items-center gap-1 text-[16px] font-medium leading-[1.5] text-black-900 transition-colors group-hover:text-blue-300 group-focus-within:text-blue-300"
-      >
-        {label}
-        <ChevronDownIcon className="size-5 shrink-0 transition-transform duration-200 group-hover:rotate-180" />
-      </Link>
-
-      <div
-        className="invisible absolute left-0 top-full z-50 w-64 translate-y-1 pt-3 opacity-0 transition-[opacity,transform] duration-150
-          group-hover:visible group-hover:translate-y-0 group-hover:opacity-100
-          group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
-      >
-        <div className="rounded-[12px] border border-grey-200 bg-white p-1.5 shadow-lg">
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block rounded-[8px] px-3 py-2 transition-colors hover:bg-blue-25"
-            >
-              <span className="block text-[15px] font-semibold text-black-900">
-                {item.label}
-              </span>
-              {item.note && (
-                <span className="mt-0.5 block text-[13px] leading-snug text-grey-600">
-                  {item.note}
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function Header() {
   return (
@@ -81,14 +35,28 @@ export function Header() {
                 воно б тягнулося через пів сторінки. Межа 720px: на 1920
                 повітря обабіч лишається, але не зяє, а до 1366 поле і так
                 вужче за неї й межа ні на що не впливає */}
-            <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+            {/* З планшета поле стоїть у рядку: на 768–1023 місця для нього
+                вистачає, а ховати головну дію сайту за лупою там немає
+                причин. Рядок меню лишається під бургером до lg — шість
+                пунктів із випадайкою у 768 не вміщаються. */}
+            <div className="hidden min-w-0 flex-1 justify-center md:flex">
               <HeaderSearch className="w-full max-w-[720px]" />
             </div>
 
             {/* Контакти переїхали в рядок меню — тут вони відбирали в поля
                 пошуку майже 270px, а там праворуч місце стояло порожнім */}
             <div className="flex shrink-0 items-center gap-2">
-              <div className="hidden items-center gap-2 lg:flex">
+              <div className="hidden items-center gap-2 md:flex">
+                {/* Обране живе в кабінеті, тому гостя звідси перекине на
+                    вхід — так само, як з кнопки кабінету поруч */}
+                <Link
+                  href="/account/favorites"
+                  aria-label="Обране"
+                  className={action}
+                >
+                  <HeartIcon className="size-6" />
+                </Link>
+
                 {/* relative — щоб лічильник позиціонувався від кнопки */}
                 <Link
                   href="/cart"
@@ -101,7 +69,8 @@ export function Header() {
                 <UserButton className={action} />
               </div>
 
-              {/* На мобільному лишаються лупа й бургер */}
+              {/* На телефоні лишаються лупа й бургер; із планшета лупа
+                  зайва — поле вже стоїть у рядку */}
               <MobileSearch />
               <MobileMenu />
             </div>
