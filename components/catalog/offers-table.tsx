@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { ProductPhoto } from "@/components/catalog/product-photo";
+import { OfferHint } from "@/components/catalog/offer-hint";
+import { AddToCartDialog } from "@/components/catalog/add-to-cart-dialog";
 import {
   CameraIcon,
   CarIcon,
@@ -10,8 +12,6 @@ import {
   CircleCheckIcon,
   InfoCircleIcon,
 } from "@/components/ui/icons";
-import { addToCartAction } from "@/app/cart/actions";
-import { setCartCount } from "@/lib/cart-count";
 import { formatMoney } from "@/lib/cn";
 
 /** Один рядок таблиці: і власна пропозиція складу, і товар-аналог */
@@ -27,9 +27,41 @@ export type OfferRow = {
   price: number | null;
   canBuy: boolean;
   image: string | null;
+  /** Характеристики — для підказок біля значків */
+  specs?: { label: string; value: string }[];
   /** Є лише в аналогів — рядок веде на сторінку того товару */
   href?: string;
 };
+
+/* Сумісність із авто API окремим полем не віддає — єдине робоче
+   джерело це характеристика «Модель» (див. сторінку товару) */
+function fitsFor(specs: OfferRow["specs"]) {
+  return (
+    specs?.find((s) => s.label.toLowerCase().startsWith("модель"))?.value ??
+    null
+  );
+}
+
+/** Короткий перелік характеристик для підказки */
+function SpecList({ specs }: { specs: OfferRow["specs"] }) {
+  const rows = (specs ?? []).filter(
+    (s) => !s.label.toLowerCase().startsWith("модель"),
+  );
+  if (!rows.length) return null;
+
+  return (
+    <dl className="flex flex-col gap-1.5">
+      {rows.slice(0, 6).map((s) => (
+        <div key={s.label} className="flex gap-2 text-[13px] leading-[1.45]">
+          <dt className="shrink-0 text-grey-600">{s.label}</dt>
+          <dd className="ml-auto text-right font-medium text-black-900">
+            {s.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 export const offersColumns = [
   "Фото",
@@ -44,63 +76,45 @@ export const offersColumns = [
   "Дія",
 ];
 
-function AddButton({
-  offerId,
-  label,
-  wide,
-}: {
-  offerId: string;
-  label: string;
-  /** У картці потрібен підпис: сама іконка поруч із ціною не зчитується */
-  wide?: boolean;
-}) {
-  const [state, setState] = useState<"idle" | "ok" | "err">("idle");
-  const [error, setError] = useState("");
-  const [pending, start] = useTransition();
+function AddButton({ row, wide }: { row: OfferRow; wide?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [added, setAdded] = useState(false);
 
+  /* Одразу класти одну штуку не можна: у таблиці поруч кілька складів із
+     різними залишками, і кількість тут вирішує. Тому значок відкриває
+     вікно, а додає вже воно. */
   return (
-    <button
-      type="button"
-      aria-label={`Додати в кошик: ${label}`}
-      /* Раніше кнопка просто червоніла й мовчала — причину не було видно
-         ні користувачу, ні при розборі */
-      title={error || undefined}
-      disabled={pending}
-      onClick={() =>
-        start(async () => {
-          const res = await addToCartAction(offerId, 1);
-          if (!res.error && res.count !== undefined) setCartCount(res.count);
-          setError(res.error ?? "");
-          setState(res.error ? "err" : "ok");
-        })
-      }
-      className={`inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
-        wide
-          ? "h-11 rounded-[8px] px-5 text-[15px] font-semibold leading-[1.5]"
-          : "size-10 rounded-full"
-      } ${
-        state === "ok"
-          ? "bg-green-300 text-white"
-          : state === "err"
-            ? "bg-danger-700 text-white"
+    <>
+      <button
+        type="button"
+        aria-label={`Додати в кошик: ${row.brand ?? ""} ${row.num}`}
+        onClick={() => setOpen(true)}
+        className={`inline-flex items-center justify-center gap-2 transition-colors ${
+          wide
+            ? "h-11 rounded-[8px] px-5 text-[15px] font-semibold leading-[1.5]"
+            : "size-10 rounded-full"
+        } ${
+          added
+            ? "bg-green-300 text-white"
             : "bg-blue-300 text-white hover:bg-blue-700"
-      }`}
-    >
-      {state === "ok" ? (
-        <CircleCheckIcon className="size-6" />
-      ) : (
-        <CartIcon className="size-6" strokeWidth={2} />
+        }`}
+      >
+        {added ? (
+          <CircleCheckIcon className="size-6" />
+        ) : (
+          <CartIcon className="size-6" strokeWidth={2} />
+        )}
+        {wide && <span>{added ? "Додано" : "У кошик"}</span>}
+      </button>
+
+      {open && (
+        <AddToCartDialog
+          row={row}
+          onClose={() => setOpen(false)}
+          onAdded={() => setAdded(true)}
+        />
       )}
-      {wide && (
-        <span>
-          {state === "ok"
-            ? "Додано"
-            : state === "err"
-              ? "Не вдалося"
-              : "У кошик"}
-        </span>
-      )}
-    </button>
+    </>
   );
 }
 
@@ -152,7 +166,7 @@ function OfferCard({
             article={r.num}
             width={56}
             height={56}
-            className="size-full object-cover"
+            className="size-full object-contain p-1"
             placeholderIconClassName="size-5"
           />
         </span>
@@ -196,11 +210,7 @@ function OfferCard({
         </span>
 
         {r.canBuy && inStock && r.offerId ? (
-          <AddButton
-            offerId={r.offerId}
-            label={`${r.brand ?? ""} ${r.num}`}
-            wide
-          />
+          <AddButton row={r} wide />
         ) : (
           <span className="text-[14px] leading-[1.45] text-grey-600">
             немає в наявності
@@ -296,7 +306,7 @@ export function OffersTable({
                         article={r.num}
                         width={48}
                         height={48}
-                        className="size-full object-cover"
+                        className="size-full object-contain p-1"
                         placeholderIconClassName="size-5"
                       />
                     </span>
@@ -327,33 +337,76 @@ export function OffersTable({
                     {r.quality ?? "—"}
                   </td>
 
-                  {/* Три швидкі переходи до картки товару: опис, фото, застосовність */}
+                  {/* Наведення показує підказку, клік і далі веде на
+                      товар: щоб глянути фото чи характеристики, більше не
+                      треба перезавантажувати сторінку */}
                   <td className="px-3 py-3">
                     <span className="flex items-center gap-2 text-blue-300">
-                      <Link
-                        href={r.href ? r.href : "#specs"}
-                        aria-label="Характеристики"
-                        title="Характеристики"
-                        className="transition-opacity hover:opacity-70"
+                      <OfferHint
+                        label="Характеристики"
+                        content={<SpecList specs={r.specs} />}
                       >
-                        <InfoCircleIcon className="size-5" />
-                      </Link>
-                      <Link
-                        href={r.href ? r.href : "#gallery"}
-                        aria-label="Фото товару"
-                        title="Фото товару"
-                        className="transition-opacity hover:opacity-70"
+                        <Link
+                          href={r.href ? r.href : "#specs"}
+                          aria-label="Характеристики"
+                          className="transition-opacity hover:opacity-70"
+                        >
+                          <InfoCircleIcon className="size-5" />
+                        </Link>
+                      </OfferHint>
+
+                      <OfferHint
+                        label="Фото товару"
+                        content={
+                          <span className="flex flex-col gap-2">
+                            <span className="block overflow-hidden rounded-[8px] border border-grey-200 bg-white">
+                              <ProductPhoto
+                                sources={r.image ? [r.image] : []}
+                                alt=""
+                                article={r.num}
+                                width={232}
+                                height={232}
+                                className="h-[232px] w-full object-contain"
+                                placeholderIconClassName="size-8"
+                              />
+                            </span>
+                            <span className="tnum text-[13px] leading-[1.45] text-grey-600">
+                              {[r.brand, r.num].filter(Boolean).join(" · ")}
+                            </span>
+                          </span>
+                        }
                       >
-                        <CameraIcon className="size-5" />
-                      </Link>
-                      <Link
-                        href={r.href ? r.href : "#specs"}
-                        aria-label="Застосовність"
-                        title="На які авто підходить"
-                        className="transition-opacity hover:opacity-70"
+                        <Link
+                          href={r.href ? r.href : "#gallery"}
+                          aria-label="Фото товару"
+                          className="transition-opacity hover:opacity-70"
+                        >
+                          <CameraIcon className="size-5" />
+                        </Link>
+                      </OfferHint>
+
+                      <OfferHint
+                        label="На які авто підходить"
+                        content={
+                          <span className="flex flex-col gap-1">
+                            <span className="text-[12px] leading-[1.4] text-grey-600">
+                              Підходить на
+                            </span>
+                            <span className="text-[13px] leading-[1.5] text-black-900">
+                              {fitsFor(r.specs) ??
+                                "Перелік авто уточнюйте в менеджера"}
+                            </span>
+                          </span>
+                        }
                       >
-                        <CarIcon className="size-5" />
-                      </Link>
+                        <Link
+                          href={r.href ? r.href : "#specs"}
+                          aria-label="Застосовність"
+                          className="transition-opacity hover:opacity-70"
+                        >
+                          <CarIcon className="size-5" />
+                        </Link>
+                      </OfferHint>
                     </span>
                   </td>
 
@@ -376,10 +429,7 @@ export function OffersTable({
 
                   <td className="px-3 py-3 text-right last:pr-3">
                     {r.canBuy && (r.count ?? 0) > 0 && r.offerId ? (
-                      <AddButton
-                        offerId={r.offerId}
-                        label={`${r.brand ?? ""} ${r.num}`}
-                      />
+                      <AddButton row={r} />
                     ) : (
                       <span className="text-[13px] leading-[1.4] text-grey-600">
                         немає

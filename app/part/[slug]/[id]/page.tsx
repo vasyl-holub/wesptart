@@ -97,6 +97,8 @@ export default async function PartPage({
     price: o.price,
     canBuy: o.canBuy,
     image: product.images[0] ?? null,
+    /* Варіанти поставки — той самий товар, тож і характеристики його */
+    specs: product.specs,
   }));
 
   const analogueRows: OfferRow[] = product.analogues.map((a) => ({
@@ -111,6 +113,7 @@ export default async function PartPage({
     price: a.offer.price,
     canBuy: a.offer.canBuy,
     image: a.image,
+    specs: a.specs,
     href: `/part/${a.slug}/${a.id}`,
   }));
 

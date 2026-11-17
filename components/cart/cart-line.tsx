@@ -68,7 +68,7 @@ export function CartLine({ item }: { item: CartItem }) {
           article={product?.num ?? ""}
           width={112}
           height={112}
-          className="size-full object-cover"
+          className="size-full object-contain p-1"
           placeholderIconClassName="size-7"
         />
       </Link>

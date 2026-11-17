@@ -55,7 +55,9 @@ export function PartGallery({
             alt={alt}
             fill
             sizes="(min-width: 1280px) 400px, (min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
+            /* contain, а не cover: фото деталей приходять із різними
+               пропорціями, і обрізання до квадрата зрізало саму деталь */
+            className="object-contain p-4"
             priority
             unoptimized={isRemoteImage(current)}
             onError={() => markBroken(current)}
@@ -95,7 +97,7 @@ export function PartGallery({
                 alt=""
                 fill
                 sizes="80px"
-                className="object-cover"
+                className="object-contain p-1"
                 unoptimized={isRemoteImage(src)}
                 onError={() => markBroken(src)}
               />

@@ -22,7 +22,8 @@ export function PartCard({ product }: { product: ProductListItem }) {
           article={product.num}
           width={280}
           height={232}
-          className="size-full object-cover"
+          /* Деталь має бути видна цілком — див. галерею */
+          className="size-full object-contain p-3"
           placeholderIconClassName="size-8"
         />
       </Link>

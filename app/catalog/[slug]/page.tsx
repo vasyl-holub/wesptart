@@ -5,7 +5,12 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { CircleCheckIcon, SearchIcon } from "@/components/ui/icons";
+import {
+  CircleCheckIcon,
+  ExternalLinkIcon,
+  SearchIcon,
+} from "@/components/ui/icons";
+import { buttonClasses } from "@/components/ui/button";
 import { VinBanner } from "@/components/home/vin-banner";
 import { findSupplier, suppliers } from "@/lib/suppliers";
 import { categoryExists } from "@/lib/api/catalog";
@@ -55,7 +60,7 @@ export default async function SupplierPage({
           <Breadcrumbs
             items={[
               { label: "Головна", href: "/" },
-              { label: "Каталог", href: "/catalog" },
+              { label: "Бренди", href: "/catalog" },
               { label: supplier.name },
             ]}
           />
@@ -81,10 +86,41 @@ export default async function SupplierPage({
                 {supplier.tagline}
               </p>
 
-              <div className="flex flex-col gap-3 text-pretty text-[16px] leading-[1.6] text-grey-700">
-                {supplier.description.map((p) => (
-                  <p key={p.slice(0, 40)}>{p}</p>
-                ))}
+              <p className="text-pretty text-[16px] leading-[1.6] text-grey-700">
+                {supplier.lead}
+              </p>
+
+              {/* Дві дії одразу під текстом, щоб їх було видно без
+                  прокручування. На телефоні — одна під одною, основна
+                  першою. */}
+              <div className="mt-1 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-start sm:gap-4">
+                <a
+                  href="#search"
+                  className={buttonClasses({ className: "w-full sm:w-auto" })}
+                >
+                  Перевірити ціну й наявність
+                </a>
+
+                {/* Кнопки немає, поки бренд не дав адресу свого каталогу */}
+                {supplier.catalogUrl && (
+                  <span className="flex flex-col gap-1">
+                    <a
+                      href={supplier.catalogUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={buttonClasses({
+                        variant: "outline",
+                        className: "w-full sm:w-auto",
+                      })}
+                    >
+                      Відкрити каталог {supplier.name}
+                      <ExternalLinkIcon className="size-5 shrink-0" />
+                    </a>
+                    <span className="text-center text-[13px] leading-[1.45] text-grey-600 sm:text-left">
+                      На сайті {supplier.name}
+                    </span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -109,6 +145,12 @@ export default async function SupplierPage({
 
       <section className="py-12 lg:py-16">
         <Container className="flex flex-col gap-8">
+          <div className="flex max-w-[720px] flex-col gap-3 text-pretty text-[16px] leading-[1.6] text-grey-700">
+            {supplier.description.map((p) => (
+              <p key={p.slice(0, 40)}>{p}</p>
+            ))}
+          </div>
+
           <div className="flex max-w-[640px] flex-col gap-3">
             <h2 className="text-[24px] font-semibold leading-[1.4] text-black-900 lg:text-[32px]">
               Що постачає {supplier.name}
@@ -133,7 +175,10 @@ export default async function SupplierPage({
             ))}
           </ul>
 
-          <div className="flex flex-col gap-4 rounded-[20px] bg-blue-25 p-6 lg:p-8">
+          <div
+            id="search"
+            className="flex scroll-mt-24 flex-col gap-4 rounded-[20px] bg-blue-25 p-6 lg:p-8"
+          >
             <h3 className="text-[18px] font-semibold leading-[1.4] text-black-900">
               Знайти деталь {supplier.name}
             </h3>

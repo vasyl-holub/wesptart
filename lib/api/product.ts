@@ -20,6 +20,8 @@ export type Analogue = {
   image: string | null;
   /** Код якості виробника: O, Q, PC, PJB, PJ, P, ZJ, Z */
   quality: string | null;
+  /** Характеристики аналога — для підказки в таблиці пропозицій */
+  specs: { label: string; value: string }[];
   offer: ProductOffer;
 };
 
@@ -197,6 +199,17 @@ function cleanLabel(name: string) {
 }
 
 /** Код якості лежить серед звичайних характеристик, під назвою «Якість» */
+/** Характеристики у вигляді «мітка — значення», без порожніх */
+function specList(
+  specs:
+    | { value: string | null; spec: { name: string | null } | null }[]
+    | undefined,
+) {
+  return (specs ?? [])
+    .filter((s) => s.spec?.name && s.value)
+    .map((s) => ({ label: cleanLabel(s.spec!.name!), value: s.value!.trim() }));
+}
+
 function qualityOf(
   specs:
     | { value: string | null; spec: { name: string | null } | null }[]
@@ -278,6 +291,7 @@ export async function getProduct(id: string): Promise<Product | null> {
         brand: cp.manufacturer?.name ?? null,
         image: cp.images?.[0] ?? null,
         quality: qualityOf(cp.specs?.edges),
+        specs: specList(cp.specs?.edges),
         offer: toOffer(price),
       },
     ];

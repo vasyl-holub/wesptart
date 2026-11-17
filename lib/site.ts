@@ -79,7 +79,9 @@ export type NavGroup = {
 
 export const mainNav: NavGroup[] = [
   {
-    label: "Каталог",
+    /* «Бренди», а не «Каталог»: у випадайці стоять саме постачальники,
+       і ланцюжок на їхніх сторінках читається «Головна → Бренди → Polcar» */
+    label: "Бренди",
     href: "/catalog",
     items: [
       {

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { gql } from "@/lib/api/graphql";
 import { getApiAuth } from "@/lib/api/session";
 import type { ApiFieldError } from "@/lib/api/auth";
@@ -62,6 +63,8 @@ export async function createOrderAction(
     return { formError: "Сесія завершилась. Увійдіть і повторіть.", values };
   }
 
+  let created: { id: string; number: string | null } | null = null;
+
   const data = {
     delivery: values.delivery,
     payMethod: values.payMethod,
@@ -97,8 +100,9 @@ export async function createOrderAction(
 
     /* Кошик після замовлення порожній — скидаємо його кеш */
     revalidatePath("/cart");
+    revalidatePath("/account");
 
-    return { orderNumber: res.addOrder?.order?.number ?? "—" };
+    created = res.addOrder?.order ?? null;
   } catch {
     return {
       formError:
@@ -106,4 +110,14 @@ export async function createOrderAction(
       values,
     };
   }
+
+  /* Окремий екран, а не блок усередині форми: сторінка оформлення має
+     охорону «порожній кошик → назад у кошик», а кошик після замовлення
+     саме порожній. Тому успіх на ній показати неможливо — його встигав
+     перебити редірект. redirect() кидає власну помилку, тому він поза
+     try, інакше catch прийняв би його за збій оформлення. */
+  if (created?.id) redirect(`/checkout/done/${created.id}/`);
+
+  /* Замовлення створене, але id не повернувся — лишаємо хоч номер */
+  return { orderNumber: created?.number ?? "—" };
 }

@@ -111,12 +111,22 @@ export default async function SearchPage({
                 OEM-номером. Якщо номера немає — надішліть VIN, і менеджер
                 підбере деталь вручну.
               </p>
-              <Link
-                href="/catalog"
-                className="mt-1 inline-flex h-12 items-center justify-center rounded-[8px] border border-blue-300 px-5 text-[16px] font-semibold leading-[1.5] text-blue-300 transition-colors hover:bg-blue-25"
-              >
-                Перейти в каталог
-              </Link>
+              {/* Пошук нічого не дав — далі має бути дія, а не ще один
+                  список. Заявку менеджер розбере вручну. */}
+              <div className="mt-1 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/requests/create"
+                  className="inline-flex h-12 items-center justify-center rounded-[8px] bg-blue-300 px-5 text-[16px] font-semibold leading-[1.5] text-white transition-colors hover:bg-blue-700"
+                >
+                  Надіслати запит
+                </Link>
+                <Link
+                  href="/catalog"
+                  className="inline-flex h-12 items-center justify-center rounded-[8px] border border-blue-300 px-5 text-[16px] font-semibold leading-[1.5] text-blue-300 transition-colors hover:bg-blue-25"
+                >
+                  Перейти в каталог
+                </Link>
+              </div>
             </div>
           )}
 
