@@ -21,3 +21,36 @@ export function viberLink(text: string) {
 export function productUrl(slug: string, id: string) {
   return `${site.url}/part/${slug}/${id}/`;
 }
+
+/**
+ * Короткий опис товару для менеджера.
+ *
+ * Артикул стоїть першим і йде в той самий рядок, що й привітання: назви
+ * в каталозі бувають по 200 символів (у них зашита вся застосовність —
+ * «…AUDI 80 B1 80 B2 … 05.72-08.91»), і артикул окремим рядком під такою
+ * назвою просто не влазив у вікно вводу Viber. Менеджер бачив питання
+ * без коду товару.
+ */
+export function productRef(p: {
+  num: string;
+  brand: string | null;
+  code: string | null;
+}) {
+  return [p.num, p.brand && `— ${p.brand}`, p.code && `(код ${p.code})`]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Назва з обрізанням по слову плюс посилання на сторінку товару */
+export function productBody(p: { name: string; slug: string; id: string }) {
+  return `${shorten(p.name, 90)}\n${productUrl(p.slug, p.id)}`;
+}
+
+function shorten(text: string, max: number) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+
+  const cut = clean.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).trim()}…`;
+}

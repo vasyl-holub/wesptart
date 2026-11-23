@@ -41,7 +41,10 @@ export default async function FavoritesPage({
                 key={item.id}
                 className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-grey-200 p-5"
               >
-                <h3 className="min-w-0 text-[16px] font-semibold leading-[1.5] text-black-900">
+                <h3
+                  className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[1.5] text-black-900"
+                  title={productTitle(item)}
+                >
                   <Link
                     href={`/part/${item.slug}/${item.productId}`}
                     className="transition-colors hover:text-blue-300"

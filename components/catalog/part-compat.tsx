@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import Image from "next/image";
 import Link from "next/link";
+import { PartFitsCard } from "@/components/catalog/part-fits-card";
 import { Container } from "@/components/ui/container";
 import {
   BoxIcon,
@@ -50,11 +51,17 @@ const delivery = [
 
 export function PartCompat({
   article,
+  productId,
+  partTitle,
   fitsFor,
 }: {
   /** Артикул підставляємо в заявку, щоб менеджер одразу бачив товар */
   article: string;
-  /** Характеристика «Модель» — єдине джерело сумісності, яке віддає API */
+  /** За ним картка сама довантажує перелік авто */
+  productId: string;
+  /** Виробник і артикул — у заголовку вікна з переліком */
+  partTitle: string;
+  /** Характеристика «Модель» — запасний варіант, поки перелік їде */
   fitsFor: string | null;
 }) {
   return (
@@ -98,19 +105,14 @@ export function PartCompat({
           </form>
         </div>
 
-        {fitsFor && (
-          <div className={card}>
-            <h2 className={title}>Підходить для:</h2>
-            {/* API віддає сумісність одним рядком, а не списком авто:
-                ділити його комами не можна — у «SKODA OCTAVIA, 13 - 17»
-                кома відділяє роки, а не другу модель */}
-            <p className="text-[16px] leading-[1.5] text-grey-700">{fitsFor}</p>
-            <Link href="/catalog" className={`${link} mt-auto`}>
-              Переглянути всі сумісні авто
-              <ChevronRightIcon className="size-5 shrink-0" />
-            </Link>
-          </div>
-        )}
+        <PartFitsCard
+          productId={productId}
+          title={partTitle}
+          fallback={fitsFor}
+          className={card}
+          titleClassName={title}
+          linkClassName={link}
+        />
 
         <div className={card}>
           <h2 className={title}>Доставка та отримання</h2>

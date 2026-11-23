@@ -31,10 +31,25 @@ export default async function MutualSettlementsPage({
 
   const query = `from=${period.from}&to=${period.to}`;
 
+  /* Підписи під сумами — від замовника: самих заголовків не вистачало.
+     «Готові до відправки» це не борг, а вартість зібраних замовлень, які
+     ще не поїхали; борг видно по мінусу на балансі. */
   const totals = [
-    { label: "Баланс", value: profile?.balance ?? 0 },
-    { label: "До оплати", value: profile?.debt ?? 0 },
-    { label: "Кредитний ліміт", value: profile?.balanceLimit ?? 0 },
+    {
+      label: "Баланс",
+      value: profile?.balance ?? 0,
+      note: "Оплати мінус сума всіх відправлень",
+    },
+    {
+      label: "Готові до відправки",
+      value: profile?.debt ?? 0,
+      note: "Вартість готових замовлень",
+    },
+    {
+      label: "Кредитний ліміт",
+      value: profile?.balanceLimit ?? 0,
+      note: "Дозволений мінус на балансі",
+    },
   ].filter((t) => t.value !== 0);
 
   return (
@@ -53,7 +68,7 @@ export default async function MutualSettlementsPage({
           тому стоять над фільтром, а не в підсумку таблиці */}
       {totals.length > 0 && (
         <dl className="grid gap-4 sm:grid-cols-3">
-          {totals.map(({ label, value }) => (
+          {totals.map(({ label, value, note }) => (
             <div
               key={label}
               className="flex flex-col gap-1 rounded-[16px] border border-grey-200 p-5"
@@ -61,8 +76,13 @@ export default async function MutualSettlementsPage({
               <dt className="text-[14px] leading-[1.5] text-grey-600">
                 {label}
               </dt>
-              <dd className="tnum text-[20px] font-semibold leading-[1.4] text-black-900">
-                {formatMoney(value)}
+              <dd className="flex flex-col gap-1">
+                <span className="tnum text-[20px] font-semibold leading-[1.4] text-black-900">
+                  {formatMoney(value)}
+                </span>
+                <span className="text-[13px] leading-[1.45] text-grey-600">
+                  {note}
+                </span>
               </dd>
             </div>
           ))}
@@ -71,8 +91,13 @@ export default async function MutualSettlementsPage({
               <dt className="text-[14px] leading-[1.5] text-grey-600">
                 Відстрочка
               </dt>
-              <dd className="text-[20px] font-semibold leading-[1.4] text-black-900">
-                {pluralize(profile.creditDays, "день", "дні", "днів")}
+              <dd className="flex flex-col gap-1">
+                <span className="text-[20px] font-semibold leading-[1.4] text-black-900">
+                  {pluralize(profile.creditDays, "день", "дні", "днів")}
+                </span>
+                <span className="text-[13px] leading-[1.45] text-grey-600">
+                  Строк оплати після відвантаження
+                </span>
               </dd>
             </div>
           ) : null}

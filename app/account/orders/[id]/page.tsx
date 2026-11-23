@@ -109,7 +109,10 @@ export default async function OrderDetailsPage({
               className="flex flex-col gap-3 rounded-[16px] border border-grey-200 p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-                <h4 className="min-w-0 text-[16px] font-semibold leading-[1.5] text-black-900">
+                <h4
+                  className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[1.5] text-black-900"
+                  title={item.product ? productTitle(item.product) : undefined}
+                >
                   {item.product ? (
                     <Link
                       href={`/part/${item.product.slug}/${item.product.id}`}

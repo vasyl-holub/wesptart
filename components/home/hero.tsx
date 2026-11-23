@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Container } from "@/components/ui/container";
+import { SEARCH_PLACEHOLDER } from "@/lib/search";
 import {
   Hierarchy3Icon,
   SearchIcon,
@@ -37,7 +38,7 @@ const entries = [
 
 export function Hero() {
   return (
-    <section className="bg-blue-25 pb-12 pt-6">
+    <section className="bg-blue-25 pb-12 pt-6 lg:pb-10">
       <Container className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-[70px]">
         <div className="flex flex-col gap-6 lg:w-[580px] lg:shrink-0 lg:gap-10">
           <div className="flex flex-col gap-4">
@@ -53,18 +54,23 @@ export function Hero() {
           </div>
 
           <div className="flex flex-col gap-6 lg:gap-12">
+            {/* З планшета поле пошуку вже стоїть у шапці — тут воно було
+                другим таким самим на одному екрані. На телефоні в шапці
+                лише лупа, тому там поле лишається. */}
             <form
               action="/search"
               role="search"
-              className="flex h-16 w-full items-center overflow-hidden rounded-[8px] border border-grey-300 bg-white"
+              className="flex h-16 w-full items-center overflow-hidden rounded-[8px] border border-grey-300 bg-white md:hidden"
             >
               <input
                 name="q"
                 type="search"
                 autoComplete="off"
                 spellCheck={false}
-                aria-label="VIN-код або номер кузова"
-                placeholder="VIN-код або номер кузова"
+                /* Форма шукає по артикулу, а не по VIN: підпис про кузов
+                   обіцяв те, чого сторінка пошуку не вміє */
+                aria-label={SEARCH_PLACEHOLDER}
+                placeholder={SEARCH_PLACEHOLDER}
                 className="h-full min-w-0 flex-1 bg-transparent px-5 text-[16px] leading-[1.5] text-black-900 placeholder:text-grey-600 focus:outline-none"
               />
               <button
@@ -97,7 +103,7 @@ export function Hero() {
             <Link
               key={e.title}
               href={e.href}
-              className={`group relative h-56 w-full shrink-0 overflow-hidden lg:h-101 lg:w-66 ${e.radius}`}
+              className={`group relative h-56 w-full shrink-0 overflow-hidden lg:h-80 lg:w-66 ${e.radius}`}
             >
               <Image
                 src={e.photo}

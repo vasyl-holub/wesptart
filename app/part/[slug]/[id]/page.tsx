@@ -75,10 +75,11 @@ export default async function PartPage({
       : []),
   ];
 
-  /* Сумісність із авто окремим полем API не віддає: `simpleCars` у товару
-     не фільтрується (однакові 99 535 записів для будь-якого артикула), а
-     productCarSimpleAll(product:) завжди повертає нуль. Єдине робоче
-     джерело — характеристика «Модель». */
+  /* Повний перелік авто бере на себе картка сумісності: він лежить у
+     `product.cars` і буває на півтори тисячі рядків, тому довантажується
+     окремо. Характеристика «Модель» лишається підписом, поки він їде:
+     `simpleCars` для цього не годиться — там однакові 99 535 записів для
+     будь-якого артикула. */
   const fitsFor =
     product.specs.find((s) => s.label.toLowerCase().startsWith("модель"))
       ?.value ?? null;
@@ -88,6 +89,7 @@ export default async function PartPage({
   const variantRows: OfferRow[] = product.offers.map((o) => ({
     key: o.id,
     offerId: o.id,
+    productId: product.id,
     brand: product.brand,
     num: product.num,
     name: product.name,
@@ -104,6 +106,7 @@ export default async function PartPage({
   const analogueRows: OfferRow[] = product.analogues.map((a) => ({
     key: a.id,
     offerId: a.offer.id,
+    productId: a.id,
     brand: a.brand,
     num: a.num,
     name: a.name,
@@ -217,7 +220,6 @@ export default async function PartPage({
             <div className="flex flex-col gap-3 lg:order-2 xl:order-3">
               <PartActions
                 product={product}
-                title={title}
                 priceLabel={user ? "Ваша ціна" : "Від"}
               />
               <PriceLevel />
@@ -230,7 +232,12 @@ export default async function PartPage({
 
       <PartOffers variants={variantRows} analogues={analogueRows} />
 
-      <PartCompat article={product.num} fitsFor={fitsFor} />
+      <PartCompat
+        article={product.num}
+        productId={product.id}
+        partTitle={[product.brand, product.num].filter(Boolean).join(" ")}
+        fitsFor={fitsFor}
+      />
 
       <VinBanner tight />
 

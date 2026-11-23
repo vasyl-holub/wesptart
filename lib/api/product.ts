@@ -91,6 +91,9 @@ type Response = {
           num: string | null;
           name: string | null;
           slug: string | null;
+          /* Головне фото лежить окремо від галереї, як і в самого товару:
+             у кросів  майже завжди порожній, а  — ні */
+          image: string | null;
           images: string[] | null;
           manufacturer: { name: string | null } | null;
           specs: {
@@ -163,6 +166,7 @@ const PRODUCT = /* GraphQL */ `
             num
             name
             slug
+            image
             images
             manufacturer {
               name
@@ -289,7 +293,7 @@ export async function getProduct(id: string): Promise<Product | null> {
         num: cp.num ?? "",
         name: cp.name?.trim() || "",
         brand: cp.manufacturer?.name ?? null,
-        image: cp.images?.[0] ?? null,
+        image: cp.image ?? cp.images?.[0] ?? null,
         quality: qualityOf(cp.specs?.edges),
         specs: specList(cp.specs?.edges),
         offer: toOffer(price),
@@ -326,13 +330,21 @@ export async function getProduct(id: string): Promise<Product | null> {
   };
 }
 
-/** Заголовок у стилі каталогу: назва, бренд, артикул */
+/**
+ * Заголовок товару: «FEBI BILSTEIN 02244 — Опора кульова нижня…».
+ *
+ * Бренд з артикулом стоять попереду, бо назви в каталозі довгі й у
+ * списках обрізаються: раніше вони були в хвості й зникали першими, а
+ * саме по них товар і впізнають.
+ */
 export function productTitle(p: {
   name: string;
   brand: string | null;
   num: string;
 }) {
-  return [p.name, p.brand, p.num].filter(Boolean).join(", ");
+  const code = [p.brand, p.num].filter(Boolean).join(" ");
+  if (!code) return p.name;
+  return p.name ? `${code} — ${p.name}` : code;
 }
 
 /* --------------------------------------------------- Списки товарів */

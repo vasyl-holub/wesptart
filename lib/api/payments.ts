@@ -2,48 +2,6 @@ import { gql, gqlRaw } from "@/lib/api/graphql";
 import { getApiAuth } from "@/lib/api/session";
 import type { ApiFieldError } from "@/lib/api/auth";
 
-/* ------------------------------------------ Неоплачені замовлення */
-
-export type UnpaidOrder = {
-  id: string;
-  number: number | null;
-  total: number | null;
-  created: string;
-};
-
-/**
- * Беремо готове поле `unpaidOrders` у користувача, а не фільтр
- * `orderAll(isPaid:false)`: бекенд уже рахує його сам і не тягне
- * усю решту даних замовлення.
- */
-export async function getUnpaidOrders(): Promise<UnpaidOrder[]> {
-  const auth = await getApiAuth();
-  if (!auth) return [];
-
-  try {
-    const data = await gql<{
-      user: { unpaidOrders: UnpaidOrder[] | null } | null;
-    }>(
-      /* GraphQL */ `
-        query UnpaidOrders {
-          user {
-            unpaidOrders {
-              id
-              number
-              total
-              created
-            }
-          }
-        }
-      `,
-      { auth },
-    );
-    return data.user?.unpaidOrders ?? [];
-  } catch {
-    return [];
-  }
-}
-
 /* ------------------------------------------ Сповіщення про оплату */
 
 export type PaymentNotice = {

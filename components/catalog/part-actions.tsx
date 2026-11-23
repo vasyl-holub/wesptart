@@ -3,17 +3,15 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  CarIcon,
   CartIcon,
-  ChevronRightIcon,
-  CircleCheckIcon,
+  ChevronDownIcon,
   HeadsetIcon,
   TruckIcon,
 } from "@/components/ui/icons";
 import { QuantityInput } from "@/components/ui/quantity-input";
 import { FavoriteButton } from "@/components/catalog/favorite-button";
 import { formatMoney } from "@/lib/cn";
-import { productUrl, viberLink } from "@/lib/viber";
+import { productBody, productRef, viberLink } from "@/lib/viber";
 import type { Product } from "@/lib/api/product";
 import { addToCartAction } from "@/app/cart/actions";
 import { setCartCount } from "@/lib/cart-count";
@@ -21,51 +19,37 @@ import { setCartCount } from "@/lib/cart-count";
 const btn =
   "flex h-12 w-full items-center justify-center gap-1.5 rounded-[8px] px-5 text-[16px] font-semibold leading-[1.5] transition-colors disabled:opacity-60";
 
-const promises = [
-  "Підберемо точно по VIN",
-  "Працюємо тільки з перевіреними брендами",
-  "Пояснимо різницю між аналогами та строками",
-];
-
 export function PartActions({
   product,
-  title,
   priceLabel = "Від",
 }: {
   product: Product;
-  /** Готовий заголовок зі сторінки: productTitle тягне next/headers,
-      тому в клієнтський компонент його не імпортуєш */
-  title: string;
   /** Для свого клієнта це вже його ціна з урахуванням рівня, а не «від» */
   priceLabel?: string;
 }) {
   const offer = product.bestOffer;
 
   /* Менеджеру потрібне не «цікавить деталь», а яка саме: тому в кожну
-     кнопку кладемо заголовок, артикул і посилання на цю сторінку.
-     Різниця між кнопками — у питанні, а не в адресаті. */
-  /* Артикул окремим рядком: у назві він стоїть у самому кінці, а назви
-     тут бувають на три рядки — менеджеру довелося б його вишукувати */
-  const card = `${title}
-Артикул: ${product.num}
-${productUrl(product.slug, product.id)}`;
+     кнопку кладемо артикул, назву й посилання на цю сторінку. Різниця
+     між кнопками — у питанні, а не в адресаті. */
+  const ref = productRef(product);
+  const body = productBody(product);
 
   const asks = {
     request: viberLink(
-      `Доброго дня! Цікавить деталь, якої зараз немає в наявності:
-${card}
+      `Доброго дня! Потрібна деталь ${ref}, якої зараз немає в наявності.
+${body}
 Підкажіть, будь ласка, строк поставки або аналог.`,
     ),
-    manager: viberLink(`Доброго дня! Питання по товару:
-${card}`),
-    vin: viberLink(
-      `Доброго дня! Хочу перевірити, чи підійде ця деталь до мого авто:
-${card}
-Мій VIN: `,
-    ),
+    /* Окрема кнопка «Перевірити по VIN» була третім способом написати
+       тому самому менеджеру в той самий Viber. Лишилась одна, а питання
+       про авто стало рядком у ній: VIN клієнт допише сам. */
+    manager: viberLink(`Доброго дня! Питання по товару ${ref}.
+${body}
+Мій VIN (якщо потрібно перевірити, чи підійде): `),
   };
   const available = Boolean(offer?.canBuy && (offer?.count ?? 0) > 0);
-  const max = offer?.count ?? 99;
+  const stock = offer?.count ?? 0;
 
   const [count, setCount] = useState(1);
   const [state, setState] = useState<"idle" | "added" | "error">("idle");
@@ -100,16 +84,6 @@ ${card}
               Найшвидша доставка {offer.deliveryDays}
             </p>
           )}
-
-          {product.offers.length > 1 && (
-            <a
-              href="#offers"
-              className="flex w-fit items-center border-b border-blue-300 text-[12px] font-medium leading-[1.5] text-blue-300 transition-opacity hover:opacity-80"
-            >
-              Доступно {product.offers.length} пропозицій
-              <ChevronRightIcon className="size-5 shrink-0" />
-            </a>
-          )}
         </div>
       ) : (
         /* Немає жодної пропозиції складу — не показуємо ні ціни, ні кнопки
@@ -132,14 +106,23 @@ ${card}
               <QuantityInput
                 value={count}
                 onChange={setCount}
-                max={max}
                 disabled={pending}
                 label="Кількість"
               />
               <span className="tnum text-[14px] leading-[1.5] text-grey-700">
-                на складі {max} шт.
+                на складі {stock} шт.
               </span>
             </div>
+
+            {/* Залишком не обмежуємо: клієнту потрібна потреба, а не те,
+                що лежить на одному складі. Менеджер добере решту в інших
+                постачальників — але попередити про це треба відразу */}
+            {count > stock && (
+              <p className="rounded-[8px] bg-blue-25 px-4 py-2.5 text-[14px] leading-[1.5] text-grey-700">
+                На складі зараз {stock} шт. Решту менеджер пошукає в інших
+                постачальників і запропонує варіанти.
+              </p>
+            )}
 
             <button
               type="button"
@@ -193,12 +176,14 @@ ${card}
           <HeadsetIcon className="size-5 shrink-0" />
         </a>
 
+        {/* Таблиця пропозицій лежить нижче за опис і характеристики —
+            без цієї кнопки до неї доводилось гортати наосліп */}
         <a
-          href={asks.vin}
+          href="#offers"
           className={`${btn} border border-blue-300 bg-white text-blue-300 hover:bg-blue-25`}
         >
-          Перевірити по VIN
-          <CarIcon className="size-5 shrink-0" />
+          Варіанти поставки та аналоги
+          <ChevronDownIcon className="size-5 shrink-0" />
         </a>
 
         <FavoriteButton productId={product.id} initial={product.isFavorite} />
@@ -213,18 +198,6 @@ ${card}
           Немає Viber? Залишити заявку на сайті
         </Link>
       </div>
-
-      <ul className="flex flex-col gap-2">
-        {promises.map((text) => (
-          <li
-            key={text}
-            className="flex items-center gap-2 text-[12px] leading-[1.5] text-black-900"
-          >
-            <CircleCheckIcon className="size-6 shrink-0 text-blue-300" />
-            {text}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

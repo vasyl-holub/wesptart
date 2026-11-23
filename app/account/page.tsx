@@ -27,52 +27,78 @@ export default async function AccountOverviewPage() {
     getPipelineCounts(),
   ]);
 
-  const debt = profile?.debt ?? 0;
+  /* `debt` — це не борг, хоч і зветься так: замовник пояснив, що це
+     вартість зібраних замовлень, які ще не поїхали. Заборгованість видно
+     по мінусу на балансі («оплати мінус сума всіх відправлень»). Раніше
+     тут стояло «До оплати» з `debt` — клієнту показували як борг те, за
+     що йому ще не виставили рахунок. */
+  const owed = Math.max(0, -(profile?.balance ?? 0));
+  const ready = profile?.debt ?? 0;
   const needToPay = profile?.needToPay ?? 0;
+
+  const money = [
+    { label: "До оплати", value: owed },
+    { label: "Готові до відправки", value: ready },
+    /* Третю суму показуємо лише якщо вона справді інша: дві майже
+       однакові мітки про одне й те саме збивали з пантелику */
+    ...(needToPay !== ready && needToPay !== owed
+      ? [{ label: "До сплати", value: needToPay }]
+      : []),
+  ].filter((m) => m.value > 0);
 
   return (
     <div className="flex flex-col gap-8">
       {/* Гроші показуємо лише коли вони ненульові: порожні рядки балансу
           у роздрібного клієнта лише відволікають */}
-      {(debt > 0 || needToPay > 0) && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-danger-500/30 bg-danger-50 px-5 py-4">
+      {money.length > 0 && (
+        <div
+          /* Червоним — лише коли є що платити. Самі «готові до
+             відправки» не борг, і тривожити ними не треба */
+          className={
+            owed > 0
+              ? "flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-danger-500/30 bg-danger-50 px-5 py-4"
+              : "flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-grey-200 px-5 py-4"
+          }
+        >
           <div className="flex flex-wrap gap-x-8 gap-y-3">
-            {debt > 0 && (
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[14px] leading-[1.5] text-danger-700">
-                  До оплати
+            {money.map(({ label, value }) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <span
+                  className={`text-[14px] leading-[1.5] ${
+                    owed > 0 ? "text-danger-700" : "text-grey-600"
+                  }`}
+                >
+                  {label}
                 </span>
-                <span className="tnum text-[20px] font-semibold leading-[1.4] text-danger-700">
-                  {formatMoney(debt)}
-                </span>
-              </div>
-            )}
-            {/* Друга сума лише коли вона відрізняється: інакше поруч
-                стояли б дві майже однакові мітки про одне й те саме */}
-            {needToPay > 0 && needToPay !== debt && (
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[14px] leading-[1.5] text-danger-700">
-                  До сплати
-                </span>
-                <span className="tnum text-[20px] font-semibold leading-[1.4] text-danger-700">
-                  {formatMoney(needToPay)}
+                <span
+                  className={`tnum text-[20px] font-semibold leading-[1.4] ${
+                    owed > 0 ? "text-danger-700" : "text-black-900"
+                  }`}
+                >
+                  {formatMoney(value)}
                 </span>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Повідомити про оплату можна лише звідси: у B2B клієнт платить
               загальну суму, а не конкретне замовлення */}
           <div className="flex flex-col items-start gap-1 sm:items-end">
             {profile?.creditDays ? (
-              <span className="text-[14px] leading-[1.5] text-danger-700">
+              <span
+                className={`text-[14px] leading-[1.5] ${
+                  owed > 0 ? "text-danger-700" : "text-grey-600"
+                }`}
+              >
                 Відстрочка{" "}
                 {pluralize(profile.creditDays, "день", "дні", "днів")}
               </span>
             ) : null}
             <Link
               href="/account/payments/notify"
-              className="text-[14px] font-semibold leading-[1.5] text-danger-700 underline underline-offset-2 transition-opacity hover:opacity-80"
+              className={`text-[14px] font-semibold leading-[1.5] underline underline-offset-2 transition-opacity hover:opacity-80 ${
+                owed > 0 ? "text-danger-700" : "text-blue-300"
+              }`}
             >
               Уже оплатили? Повідомте нас →
             </Link>

@@ -28,8 +28,11 @@ export function PartCard({ product }: { product: ProductListItem }) {
         />
       </Link>
 
-      <div className="flex flex-col gap-2 text-[16px] leading-[1.5] text-black-900">
-        <h3 className="font-semibold">
+      {/* w-full — інакше колонка звужується до тексту (items-start) і
+          обрізати нема чого. Повна назва лишається в розмітці: ховає її
+          CSS, тож пошуковики й читалки бачать усе. */}
+      <div className="flex w-full flex-col gap-2 text-[16px] leading-[1.5] text-black-900">
+        <h3 className="truncate font-semibold" title={title}>
           <Link href={href} className="transition-colors hover:text-blue-300">
             {title}
           </Link>

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { ProductPhoto } from "@/components/catalog/product-photo";
 import { OfferHint } from "@/components/catalog/offer-hint";
+import { CarFitsButton } from "@/components/catalog/car-fits-button";
 import { AddToCartDialog } from "@/components/catalog/add-to-cart-dialog";
 import {
   CameraIcon,
-  CarIcon,
   CartIcon,
   CircleCheckIcon,
+  GoogleMark,
   InfoCircleIcon,
 } from "@/components/ui/icons";
 import { formatMoney } from "@/lib/cn";
@@ -18,6 +19,8 @@ import { formatMoney } from "@/lib/cn";
 export type OfferRow = {
   key: string;
   offerId: string;
+  /** Товар, якому належить пропозиція — за ним тягнемо застосовність */
+  productId: string;
   brand: string | null;
   num: string;
   name: string;
@@ -33,12 +36,36 @@ export type OfferRow = {
   href?: string;
 };
 
-/* Сумісність із авто API окремим полем не віддає — єдине робоче
-   джерело це характеристика «Модель» (див. сторінку товару) */
-function fitsFor(specs: OfferRow["specs"]) {
+/** Підпис товару для заголовків вікон і запиту в Google */
+function label(row: OfferRow) {
+  return [row.brand, row.num].filter(Boolean).join(" ");
+}
+
+/**
+ * Пошук фото в Google.
+ *
+ * Своє фото є не в кожного артикула — у бюджетних брендів його часто
+ * немає зовсім. Тягнути чуже зображення до себе не можна: права чужі, а
+ * видача по артикулу легко підсуне іншу деталь. Тому не підставляємо
+ * картинку, а даємо подивитись першоджерело: `udm=2` — вкладка «Фото».
+ */
+function GooglePhotoLink({ row }: { row: OfferRow }) {
+  const query = label(row);
+
   return (
-    specs?.find((s) => s.label.toLowerCase().startsWith("модель"))?.value ??
-    null
+    <a
+      href={`https://www.google.com/search?q=${encodeURIComponent(query)}&udm=2`}
+      target="_blank"
+      rel="noopener noreferrer"
+      /* Рядок таблиці клікабельний — без цього клік ще й перемикав би
+         обрану пропозицію */
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Шукати фото ${query} в Google`}
+      title="Шукати фото в Google"
+      className="inline-flex transition-opacity hover:opacity-70"
+    >
+      <GoogleMark className="size-5" />
+    </a>
   );
 }
 
@@ -183,6 +210,18 @@ function OfferCard({
           </span>
           <span className="tnum text-[13px] leading-[1.45] text-grey-600">
             {[r.brand, r.num].filter(Boolean).join(" · ")}
+          </span>
+
+          {/* Ті самі значки, що й у таблиці: на телефоні колонка з ними
+              не поміщалась, а застосовність і фото потрібні й тут */}
+          <span
+            className="mt-0.5 flex items-center gap-3 text-blue-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CarFitsButton productId={r.productId} title={label(r)} />
+            {/* Фото тут видно одразу, тож Google потрібен лише коли
+                свого фото немає */}
+            {!r.image && <GooglePhotoLink row={r} />}
           </span>
         </div>
       </div>
@@ -355,58 +394,44 @@ export function OffersTable({
                         </Link>
                       </OfferHint>
 
-                      <OfferHint
-                        label="Фото товару"
-                        content={
-                          <span className="flex flex-col gap-2">
-                            <span className="block overflow-hidden rounded-[8px] border border-grey-200 bg-white">
-                              <ProductPhoto
-                                sources={r.image ? [r.image] : []}
-                                alt=""
-                                article={r.num}
-                                width={232}
-                                height={232}
-                                className="h-[232px] w-full object-contain"
-                                placeholderIconClassName="size-8"
-                              />
+                      {/* Одне місце — два стани: своє фото показуємо
+                          фотоапаратом, а коли його немає, замість нього
+                          стає Google. Так робив і старий кабінет. */}
+                      {r.image ? (
+                        <OfferHint
+                          label="Фото товару"
+                          content={
+                            <span className="flex flex-col gap-2">
+                              <span className="block overflow-hidden rounded-[8px] border border-grey-200 bg-white">
+                                <ProductPhoto
+                                  sources={[r.image]}
+                                  alt=""
+                                  article={r.num}
+                                  width={232}
+                                  height={232}
+                                  className="h-[232px] w-full object-contain"
+                                  placeholderIconClassName="size-8"
+                                />
+                              </span>
+                              <span className="tnum text-[13px] leading-[1.45] text-grey-600">
+                                {[r.brand, r.num].filter(Boolean).join(" · ")}
+                              </span>
                             </span>
-                            <span className="tnum text-[13px] leading-[1.45] text-grey-600">
-                              {[r.brand, r.num].filter(Boolean).join(" · ")}
-                            </span>
-                          </span>
-                        }
-                      >
-                        <Link
-                          href={r.href ? r.href : "#gallery"}
-                          aria-label="Фото товару"
-                          className="transition-opacity hover:opacity-70"
+                          }
                         >
-                          <CameraIcon className="size-5" />
-                        </Link>
-                      </OfferHint>
+                          <Link
+                            href={r.href ? r.href : "#gallery"}
+                            aria-label="Фото товару"
+                            className="transition-opacity hover:opacity-70"
+                          >
+                            <CameraIcon className="size-5" />
+                          </Link>
+                        </OfferHint>
+                      ) : (
+                        <GooglePhotoLink row={r} />
+                      )}
 
-                      <OfferHint
-                        label="На які авто підходить"
-                        content={
-                          <span className="flex flex-col gap-1">
-                            <span className="text-[12px] leading-[1.4] text-grey-600">
-                              Підходить на
-                            </span>
-                            <span className="text-[13px] leading-[1.5] text-black-900">
-                              {fitsFor(r.specs) ??
-                                "Перелік авто уточнюйте в менеджера"}
-                            </span>
-                          </span>
-                        }
-                      >
-                        <Link
-                          href={r.href ? r.href : "#specs"}
-                          aria-label="Застосовність"
-                          className="transition-opacity hover:opacity-70"
-                        >
-                          <CarIcon className="size-5" />
-                        </Link>
-                      </OfferHint>
+                      <CarFitsButton productId={r.productId} title={label(r)} />
                     </span>
                   </td>
 

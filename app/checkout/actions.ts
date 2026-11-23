@@ -116,8 +116,16 @@ export async function createOrderAction(
      саме порожній. Тому успіх на ній показати неможливо — його встигав
      перебити редірект. redirect() кидає власну помилку, тому він поза
      try, інакше catch прийняв би його за збій оформлення. */
-  if (created?.id) redirect(`/checkout/done/${created.id}/`);
+  if (created) {
+    /* Номер їде окремо: екран підтвердження читає замовлення іншим
+       запитом, і якщо той не спрацює, номер лишається єдиним, чим можна
+       підтвердити оформлення. Без нього сторінка віддавала 404 — після
+       успішного замовлення це найгірше, що можна показати. */
+    const query = created.number
+      ? `?n=${encodeURIComponent(created.number)}`
+      : "";
+    redirect(`/checkout/done/${created.id || "-"}/${query}`);
+  }
 
-  /* Замовлення створене, але id не повернувся — лишаємо хоч номер */
-  return { orderNumber: created?.number ?? "—" };
+  return { formError: "Замовлення не створене. Спробуйте ще раз.", values };
 }

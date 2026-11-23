@@ -199,7 +199,8 @@ export function PartOffers({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        {/* scroll-mt — щоб заголовок не ховався під шапкою сайту */}
+        <div id="offers" className="flex scroll-mt-24 flex-col gap-4">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h2 className="text-[24px] font-semibold leading-[1.4] text-black-900">
               Варіанти поставки

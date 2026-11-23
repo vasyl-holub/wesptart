@@ -29,7 +29,7 @@ export function AddToCartDialog({
   /** Щоб значок у таблиці коротко підтвердив, що позиція додана */
   onAdded?: () => void;
 }) {
-  const max = Math.max(1, row.count ?? 1);
+  const stock = row.count ?? 0;
   const [count, setCount] = useState(1);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -116,7 +116,7 @@ export function AddToCartDialog({
                 {[row.brand, row.num].filter(Boolean).join(" · ")}
               </span>
               <span className="text-[13px] leading-[1.45] text-grey-600">
-                На складі: <span className="tnum">{row.count ?? 0}</span> шт.
+                На складі: <span className="tnum">{stock}</span> шт.
                 {row.deliveryDays && ` · доставка ${row.deliveryDays}`}
               </span>
             </div>
@@ -142,7 +142,6 @@ export function AddToCartDialog({
             <QuantityInput
               value={count}
               onChange={setCount}
-              max={max}
               disabled={pending}
             />
 
@@ -155,6 +154,16 @@ export function AddToCartDialog({
               </span>
             </div>
           </div>
+
+          {/* Залишком не обмежуємо: на одному складі лежить два, а клієнту
+              треба чотири — менеджер добере решту в інших постачальників.
+              Але сказати про це треба відразу, щоб строк не був сюрпризом */}
+          {count > stock && (
+            <p className="rounded-[8px] bg-blue-25 px-4 py-2.5 text-[14px] leading-[1.5] text-grey-700">
+              На складі зараз {stock} шт. Решту менеджер пошукає в інших
+              постачальників і запропонує варіанти.
+            </p>
+          )}
 
           {error && (
             <p

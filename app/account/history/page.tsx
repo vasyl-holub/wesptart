@@ -82,7 +82,10 @@ export default async function HistoryPage({
                   key={item.id}
                   className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[16px] border border-grey-200 p-5 transition-colors hover:border-blue-300"
                 >
-                  <h3 className="min-w-0 flex-1 text-[16px] font-semibold leading-[1.5] text-black-900">
+                  <h3
+                    className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[1.5] text-black-900"
+                    title={productTitle(item)}
+                  >
                     <Link
                       href={`/part/${item.slug}/${item.productId}`}
                       className="transition-colors hover:text-blue-300"

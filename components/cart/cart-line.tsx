@@ -10,11 +10,14 @@ import { deliveryLabel, type CartItem } from "@/lib/cart-format";
 import { changeCountAction, removeItemAction } from "@/app/cart/actions";
 import { setCartCount } from "@/lib/cart-count";
 
-/** Назва рядком: деталь, бренд, артикул — як у картці товару */
+/** Бренд і артикул попереду — той самий порядок, що й у картці товару */
 function lineTitle(item: CartItem) {
   const p = item.product;
   if (!p) return "Позиція";
-  return [p.name, p.manufacturer?.name, p.num].filter(Boolean).join(", ");
+
+  const code = [p.manufacturer?.name, p.num].filter(Boolean).join(" ");
+  if (!code) return p.name || "Позиція";
+  return p.name ? `${code} — ${p.name}` : code;
 }
 
 export function CartLine({ item }: { item: CartItem }) {
@@ -24,8 +27,10 @@ export function CartLine({ item }: { item: CartItem }) {
 
   const product = item.product;
   const href = product ? `/part/${product.slug}/${product.id}` : "/cart";
-  /* Скільки максимум можна взяти — обмежує залишок складу */
-  const max = item.priceItem?.count ?? 999;
+  /* Залишком не обмежуємо: клієнт може замовити більше, ніж є на
+     одному складі, — менеджер добере решту в інших постачальників.
+     Залишок лишається підказкою, а не стелею. */
+  const stock = item.priceItem?.count ?? 0;
   const unit = item.price ?? item.priceItem?.priceOut ?? 0;
 
   const apply = (next: number) => {
@@ -75,7 +80,10 @@ export function CartLine({ item }: { item: CartItem }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-[16px] font-semibold leading-[1.5] text-black-900">
+          <h3
+            className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[1.5] text-black-900"
+            title={lineTitle(item)}
+          >
             <Link href={href} className="transition-colors hover:text-blue-300">
               {lineTitle(item)}
             </Link>
@@ -103,7 +111,6 @@ export function CartLine({ item }: { item: CartItem }) {
             <QuantityInput
               value={count}
               onChange={apply}
-              max={max}
               disabled={pending}
               label={`Кількість — ${lineTitle(item)}`}
             />
@@ -117,9 +124,10 @@ export function CartLine({ item }: { item: CartItem }) {
           </p>
         </div>
 
-        {count >= max && (
+        {count > stock && (
           <p className="tnum text-[14px] leading-[1.5] text-grey-600">
-            Це весь залишок на складі — {max} шт.
+            На складі зараз {stock} шт. Решту менеджер пошукає в інших
+            постачальників і запропонує варіанти.
           </p>
         )}
 

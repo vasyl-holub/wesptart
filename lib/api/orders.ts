@@ -443,7 +443,30 @@ export type OrderDetails = {
   items: OrderItem[];
 };
 
-const ORDER_ONE = /* GraphQL */ `
+/**
+ * Поля, які схема оголосила обовʼязковими, хоч у базі вони бувають
+ * порожні: `payMethod: PayMethodNode!`, `city: String!`, `address:
+ * String!` і сусіди. Варто одному прийти NULL — і GraphQL гасить усе
+ * замовлення: приходить `order: null` з помилкою збоку. Сторінка
+ * замовлення через це віддавала 404 на щойно оформлене замовлення.
+ *
+ * Тому вони лежать окремо: якщо повний запит нічого не дав, читаємо ще
+ * раз без них. Краще картка без адреси, ніж «такої сторінки немає».
+ */
+const ORDER_CONTACTS = /* GraphQL */ `
+  deliveryCost
+  deliveryInfo
+  deliveryDeclaration
+  payMethod {
+    name
+  }
+  recipient
+  city
+  address
+  phone
+`;
+
+const orderQuery = (contacts: boolean) => /* GraphQL */ `
   query Order($id: ID!) {
     order(id: $id) {
       id
@@ -451,23 +474,14 @@ const ORDER_ONE = /* GraphQL */ `
       created
       status
       total
-      deliveryCost
       isPaid
       shipped
       deliveryDate
-      deliveryInfo
-      deliveryDeclaration
       deliveryMessage
       delivery {
         name
       }
-      payMethod {
-        name
-      }
-      recipient
-      city
-      address
-      phone
+      ${contacts ? ORDER_CONTACTS : ""}
       canBeCancelled
       canBeReturned
       printUrl
@@ -483,7 +497,7 @@ const ORDER_ONE = /* GraphQL */ `
           total
           deliveryDays
           arrival
-          comment
+          ${contacts ? "comment" : ""}
           canBeReturned
           hasReturn
           product {
@@ -508,19 +522,20 @@ type OrderOneResponse = {
     created: string;
     status: number | null;
     total: number | null;
-    deliveryCost: string;
     isPaid: boolean;
     shipped: string | null;
     deliveryDate: string | null;
-    deliveryInfo: string;
-    deliveryDeclaration: string;
     deliveryMessage: string | null;
     delivery: { name: string } | null;
-    payMethod: { name: string } | null;
-    recipient: string;
-    city: string;
-    address: string;
-    phone: string;
+    /* Усе нижче приходить лише з повного запиту — див. ORDER_CONTACTS */
+    deliveryCost?: string;
+    deliveryInfo?: string;
+    deliveryDeclaration?: string;
+    payMethod?: { name: string } | null;
+    recipient?: string;
+    city?: string;
+    address?: string;
+    phone?: string;
     canBeCancelled: boolean | null;
     canBeReturned: boolean | null;
     printUrl: string | null;
@@ -528,7 +543,9 @@ type OrderOneResponse = {
     csvUrl: string | null;
     comments: { edges: RawComment[] } | null;
     items: {
-      edges: {
+      /* Та сама пастка, що й у замовлення: `comment: String!` у позиції
+         буває порожнім, і тоді GraphQL гасить увесь елемент у null */
+      edges: ({
         id: string;
         status: number | null;
         count: number;
@@ -536,7 +553,7 @@ type OrderOneResponse = {
         total: number | null;
         deliveryDays: number;
         arrival: string | null;
-        comment: string;
+        comment?: string;
         canBeReturned: boolean | null;
         hasReturn: boolean | null;
         product: {
@@ -546,7 +563,7 @@ type OrderOneResponse = {
           num: string;
           manufacturer: { name: string } | null;
         } | null;
-      }[];
+      } | null)[];
     } | null;
   } | null;
 };
@@ -555,62 +572,79 @@ export async function getOrder(id: string): Promise<OrderDetails | null> {
   const auth = await getApiAuth();
   if (!auth) return null;
 
-  try {
-    const data = await gql<OrderOneResponse>(ORDER_ONE, {
-      auth,
-      variables: { id },
-    });
-    const o = data.order;
-    if (!o) return null;
+  const read = async (contacts: boolean) => {
+    try {
+      const data = await gql<OrderOneResponse>(orderQuery(contacts), {
+        auth,
+        variables: { id },
+      });
+      return data.order;
+    } catch (error) {
+      /* Мовчазний null тут коштував 404 на екрані після оформлення —
+         хай причина буде хоч у логах сервера */
+      console.error(
+        `[orders] замовлення ${id}${contacts ? "" : " (без контактів)"}:`,
+        error,
+      );
+      return null;
+    }
+  };
 
+  const o = (await read(true)) ?? (await read(false));
+  if (!o) return null;
+
+  try {
     return {
       id: o.id,
       number: o.number,
       created: o.created,
       status: o.status,
       total: o.total,
-      deliveryCost: o.deliveryCost,
+      deliveryCost: o.deliveryCost ?? "0",
       isPaid: o.isPaid,
       shipped: o.shipped,
       deliveryDate: o.deliveryDate,
-      deliveryInfo: o.deliveryInfo,
-      deliveryDeclaration: o.deliveryDeclaration,
+      deliveryInfo: o.deliveryInfo ?? "",
+      deliveryDeclaration: o.deliveryDeclaration ?? "",
       deliveryMessage: o.deliveryMessage,
       deliveryName: o.delivery?.name ?? null,
       payMethodName: o.payMethod?.name ?? null,
-      recipient: o.recipient,
-      city: o.city,
-      address: o.address,
-      phone: o.phone,
+      recipient: o.recipient ?? "",
+      city: o.city ?? "",
+      address: o.address ?? "",
+      phone: o.phone ?? "",
       canBeCancelled: Boolean(o.canBeCancelled),
       canBeReturned: Boolean(o.canBeReturned),
       printUrl: backendUrl(o.printUrl),
       checkUrl: backendUrl(o.checkUrl),
       csvUrl: backendUrl(o.csvUrl),
       comments: visibleComments(o.comments?.edges),
-      items: (o.items?.edges ?? []).map((i) => ({
-        id: i.id,
-        status: i.status,
-        count: i.count,
-        price: i.price,
-        total: i.total,
-        deliveryDays: i.deliveryDays,
-        arrival: i.arrival,
-        comment: i.comment,
-        canBeReturned: Boolean(i.canBeReturned),
-        hasReturn: Boolean(i.hasReturn),
-        product: i.product
-          ? {
-              id: i.product.id,
-              slug: i.product.slug,
-              name: i.product.name,
-              num: i.product.num,
-              brand: i.product.manufacturer?.name ?? null,
-            }
-          : null,
-      })),
+      items: (o.items?.edges ?? [])
+        .filter((i) => i !== null)
+        .map((i) => ({
+          id: i.id,
+          status: i.status,
+          count: i.count,
+          price: i.price,
+          total: i.total,
+          deliveryDays: i.deliveryDays,
+          arrival: i.arrival,
+          comment: i.comment ?? "",
+          canBeReturned: Boolean(i.canBeReturned),
+          hasReturn: Boolean(i.hasReturn),
+          product: i.product
+            ? {
+                id: i.product.id,
+                slug: i.product.slug,
+                name: i.product.name,
+                num: i.product.num,
+                brand: i.product.manufacturer?.name ?? null,
+              }
+            : null,
+        })),
     };
-  } catch {
+  } catch (error) {
+    console.error(`[orders] не вдалося розібрати замовлення ${id}:`, error);
     return null;
   }
 }
@@ -669,11 +703,57 @@ export type ReturnItem = {
   dispatchInfo: string;
   accountUrl: string | null;
   product: { slug: string; id: string; name: string; num: string } | null;
+  /** Замовлення, з якого повертають — у старому кабінеті по ньому шукали */
+  orderId: string | null;
+  orderNumber: number | null;
+  /** Документ повернення: номер і сторінка для друку */
+  documentNumber: number | null;
+  documentUrl: string | null;
+};
+
+/** Ті самі фільтри, що були в старому кабінеті на /returns/ */
+export type ReturnFilters = {
+  orderNumber?: number;
+  documentNumber?: number;
+  reason?: number;
+  reaction?: number;
+  description?: string;
+  dispatchInfo?: string;
+  /** Назва товару */
+  product?: string;
+  /** Артикул — окремий фільтр бекенду, по назві він не шукає */
+  productNum?: string;
+  createdFrom?: string;
+  createdTo?: string;
 };
 
 const RETURNS = /* GraphQL */ `
-  query Returns($page: Int!, $perPage: Int!) {
-    returnsAll(page: $page, perPage: $perPage) {
+  query Returns(
+    $page: Int!
+    $perPage: Int!
+    $orderNumber: Decimal
+    $accountNumber: Decimal
+    $reason: Int
+    $reaction: Int
+    $description: String
+    $dispatchInfo: String
+    $product: String
+    $productNum: String
+    $createdDateRange: DateRangeFieldInput
+  ) {
+    returnsAll(
+      page: $page
+      perPage: $perPage
+      orderNumber: $orderNumber
+      accountNumber: $accountNumber
+      reason: $reason
+      reaction: $reaction
+      description_Icontains: $description
+      dispatchInfo_Icontains: $dispatchInfo
+      product: $product
+      productNum: $productNum
+      createdDateRange: $createdDateRange
+    ) {
       totalCount
       pagesCount
       edges {
@@ -686,7 +766,15 @@ const RETURNS = /* GraphQL */ `
         created
         dispatchInfo
         accountUrl
+        account {
+          number
+          printUrl
+        }
         orderItem {
+          order {
+            id
+            number
+          }
           product {
             id
             slug
@@ -705,7 +793,22 @@ export type ReturnsPage = {
   pagesCount: number;
 };
 
-export async function getReturns(page = 1, perPage = 10): Promise<ReturnsPage> {
+type RawReturn = Omit<
+  ReturnItem,
+  "product" | "orderId" | "orderNumber" | "documentNumber" | "documentUrl"
+> & {
+  account: { number: number | null; printUrl: string | null } | null;
+  orderItem: {
+    order: { id: string; number: number | null } | null;
+    product: { id: string; slug: string; name: string; num: string } | null;
+  } | null;
+};
+
+export async function getReturns(
+  page = 1,
+  perPage = 10,
+  filters: ReturnFilters = {},
+): Promise<ReturnsPage> {
   const auth = await getApiAuth();
   if (!auth) return { items: [], totalCount: 0, pagesCount: 0 };
 
@@ -714,31 +817,47 @@ export async function getReturns(page = 1, perPage = 10): Promise<ReturnsPage> {
       returnsAll: {
         totalCount: number | null;
         pagesCount: number | null;
-        edges: (Omit<ReturnItem, "product"> & {
-          orderItem: {
-            product: {
-              id: string;
-              slug: string;
-              name: string;
-              num: string;
-            } | null;
-          } | null;
-        })[];
+        /* Поля `description`, `comment` і `dispatchInfo` оголошені
+           String!, хоч у базі порожні — тоді GraphQL гасить увесь запис
+           у null. Той самий капкан, що й у замовленнях. */
+        edges: (RawReturn | null)[];
       } | null;
-    }>(RETURNS, { auth, variables: { page, perPage } });
+    }>(RETURNS, {
+      auth,
+      variables: {
+        page,
+        perPage,
+        orderNumber: filters.orderNumber,
+        accountNumber: filters.documentNumber,
+        reason: filters.reason,
+        reaction: filters.reaction,
+        description: text(filters.description),
+        dispatchInfo: text(filters.dispatchInfo),
+        product: text(filters.product),
+        productNum: text(filters.productNum),
+        createdDateRange: dateRange(filters.createdFrom, filters.createdTo),
+      },
+    });
 
     const conn = data.returnsAll;
     if (!conn) return { items: [], totalCount: 0, pagesCount: 0 };
 
     return {
-      items: conn.edges.map(({ orderItem, ...r }) => ({
-        ...r,
-        product: orderItem?.product ?? null,
-      })),
+      items: conn.edges
+        .filter((r) => r !== null)
+        .map(({ orderItem, account, ...r }) => ({
+          ...r,
+          product: orderItem?.product ?? null,
+          orderId: orderItem?.order?.id ?? null,
+          orderNumber: orderItem?.order?.number ?? null,
+          documentNumber: account?.number ?? null,
+          documentUrl: backendUrl(account?.printUrl),
+        })),
       totalCount: conn.totalCount ?? 0,
       pagesCount: conn.pagesCount ?? 0,
     };
-  } catch {
+  } catch (error) {
+    console.error("[returns] не вдалося прочитати повернення:", error);
     return { items: [], totalCount: 0, pagesCount: 0 };
   }
 }

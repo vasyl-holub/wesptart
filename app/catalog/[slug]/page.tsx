@@ -117,7 +117,7 @@ export default async function SupplierPage({
                       <ExternalLinkIcon className="size-5 shrink-0" />
                     </a>
                     <span className="text-center text-[13px] leading-[1.45] text-grey-600 sm:text-left">
-                      На сайті {supplier.name}
+                      {supplier.catalogNote ?? `На сайті ${supplier.name}`}
                     </span>
                   </span>
                 )}

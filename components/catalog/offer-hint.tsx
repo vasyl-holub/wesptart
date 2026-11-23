@@ -16,6 +16,7 @@ export function OfferHint({
   label,
   children,
   content,
+  onShow,
 }: {
   /** Підпис для читалок і для `title` */
   label: string;
@@ -23,12 +24,15 @@ export function OfferHint({
   children: React.ReactNode;
   /** Вміст підказки; `null` — показувати нічого */
   content: React.ReactNode;
+  /** Наведення сталося — привід довантажити те, чого ще немає */
+  onShow?: () => void;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [box, setBox] = useState<{ top: number; left: number } | null>(null);
 
   const show = () => {
     const el = ref.current;
+    onShow?.();
     if (!el || !content) return;
 
     const r = el.getBoundingClientRect();

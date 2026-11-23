@@ -368,7 +368,6 @@ export async function notifyPaymentAction(
   const payMethod = String(formData.get("payMethod") ?? "");
   const rawValue = String(formData.get("value") ?? "").trim();
   const comment = String(formData.get("comment") ?? "").trim();
-  const orders = formData.getAll("orders").map(String).filter(Boolean);
 
   const values = { date, payMethod, value: rawValue, comment };
   const fieldErrors: Record<string, string> = {};
@@ -390,7 +389,6 @@ export async function notifyPaymentAction(
       date: `${date}T00:00:00`,
       payMethod,
       value: String(value),
-      ...(orders.length ? { orders } : {}),
       ...(comment ? { comment } : {}),
     });
 

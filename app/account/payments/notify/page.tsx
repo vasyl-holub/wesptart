@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PaymentForm } from "@/components/account/payment-form";
 import { Pagination } from "@/components/ui/pagination";
 import { StatusBadge } from "@/components/account/status-badge";
-import { getPaymentNotices, getUnpaidOrders } from "@/lib/api/payments";
+import { getPaymentNotices } from "@/lib/api/payments";
 import { getOrderOptions } from "@/lib/api/cart";
 import { formatDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/cn";
@@ -21,9 +21,8 @@ export default async function PaymentNotifyPage({
   const raw = Number(typeof sp.page === "string" ? sp.page : "1");
   const page = Number.isFinite(raw) && raw > 0 ? raw : 1;
 
-  const [notices, unpaid, options] = await Promise.all([
+  const [notices, options] = await Promise.all([
     getPaymentNotices(page, PER_PAGE),
-    getUnpaidOrders(),
     getOrderOptions(),
   ]);
 
@@ -45,11 +44,7 @@ export default async function PaymentNotifyPage({
           </p>
         </div>
 
-        <PaymentForm
-          payMethods={options.payMethods}
-          unpaidOrders={unpaid}
-          today={today}
-        />
+        <PaymentForm payMethods={options.payMethods} today={today} />
       </section>
 
       <section className="flex flex-col gap-4 border-t border-grey-200 pt-10">
